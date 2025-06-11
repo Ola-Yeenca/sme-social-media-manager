@@ -103,21 +103,21 @@ async def run_growth_only():
         raise
 
 async def run_content_generation():
-    """Run SME Analytica specific content generation"""
+    """Run AI-powered SME Analytica content generation"""
 
     logger = logging.getLogger(__name__)
-    logger.info("📝 Starting SME Analytica content generation")
+    logger.info("🤖 Starting AI-powered SME Analytica content generation")
 
     try:
-        from sme_content_generator import generate_sme_analytica_content
+        from ai_content_generator import generate_ai_content
 
-        posts_created = await generate_sme_analytica_content()
+        posts_created = await generate_ai_content()
 
-        logger.info(f"✅ SME Analytica content generation completed: {posts_created} posts created")
+        logger.info(f"✅ AI content generation completed: {posts_created} posts created")
         return {"posts_created": posts_created}
 
     except Exception as e:
-        logger.error(f"❌ Content generation failed: {e}")
+        logger.error(f"❌ AI content generation failed: {e}")
         raise
 
 async def run_analytics():
