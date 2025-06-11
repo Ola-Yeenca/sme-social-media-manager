@@ -46,60 +46,82 @@ class EnhancedContentStrategy:
         
         self.content_types = {
             "educational_threads": [
-                "🧵 THREAD: 5 Ways to Increase Restaurant Revenue with Data Analytics",
-                "🧵 THREAD: How to Read Your Business Analytics Dashboard",
-                "🧵 THREAD: Dynamic Pricing Strategies for Small Businesses",
-                "🧵 THREAD: Customer Behavior Analytics 101",
-                "🧵 THREAD: Inventory Management with AI"
+                "🧵 THREAD: 5 Ways MenuFlow's AI Pricing Boosts Restaurant Revenue by 10%",
+                "🧵 THREAD: How SME Analytica Turns Raw Sales Data into Profit",
+                "🧵 THREAD: Dynamic Pricing for Restaurants - Real Results from Early Users",
+                "🧵 THREAD: Why Small Businesses Need Enterprise-Level Analytics (Made Simple)",
+                "🧵 THREAD: From QR Menus to AI Insights - The Complete Restaurant Tech Stack"
             ],
             "quick_tips": [
-                "💡 Quick Tip: Track your peak hours to optimize staffing costs",
-                "💡 Quick Tip: Use customer data to create targeted promotions",
-                "💡 Quick Tip: Monitor competitor pricing for better positioning",
-                "💡 Quick Tip: Analyze seasonal trends to plan inventory",
-                "💡 Quick Tip: Track customer lifetime value to focus retention"
+                "💡 Data Tip: AI-driven dynamic pricing can boost your peak-hour margins ~10% (our early tests prove it!)",
+                "💡 Restaurant Tip: QR menus + real-time analytics = faster table turns & higher checks",
+                "💡 Retail Insight: Track foot-traffic patterns - a simple heatmap reveals your goldmine hours",
+                "💡 Hotel Hack: Analyze guest feedback + occupancy data together for RevPAR optimization",
+                "💡 SME Secret: You don't need to be a data scientist to make data-driven decisions"
             ],
             "industry_stats": [
-                "📊 STAT: 73% of restaurants that use data analytics see 15%+ revenue growth",
-                "📊 STAT: Small businesses using dynamic pricing increase profits by 25%",
-                "📊 STAT: 68% of customers prefer businesses that personalize their experience",
-                "📊 STAT: Data-driven restaurants reduce food waste by 30%",
-                "📊 STAT: 82% of successful SMEs use analytics for decision making"
+                "📊 REAL DATA: MenuFlow users report ~10% higher margins during peak hours thanks to AI pricing",
+                "📊 SME INSIGHT: Restaurants using our QR + analytics see faster table turns & higher average checks",
+                "📊 FACT: 63% of restaurateurs plan to invest in QR tech - we're already there with MenuFlow",
+                "📊 PROVEN: SME Analytica turns raw sales data into actionable insights without complex setup",
+                "📊 RESULT: Early adopters serve more guests per hour with minimal wait time using our AI suggestions"
             ],
             "engagement_posts": [
-                "🤔 QUESTION: What's your biggest challenge with business analytics?",
-                "🗳️ POLL: Which metric do you track most? Revenue | Customers | Inventory | Other",
-                "💬 DISCUSSION: How do you currently track customer preferences?",
-                "🎯 CHALLENGE: Share your best data-driven business decision!",
-                "🤝 COMMUNITY: Tag a fellow business owner who needs better analytics!"
+                "🤔 RESTAURANT OWNERS: What's your biggest challenge - pricing, inventory, or customer insights?",
+                "🗳️ POLL: Which would boost your revenue most? Dynamic Pricing | Real-time Analytics | QR Ordering | AI Insights",
+                "💬 SME QUESTION: How do you currently decide when to raise prices during busy periods?",
+                "🎯 SHARE: Tell us about a time data helped you make a game-changing business decision!",
+                "🤝 TAG: Which fellow restaurant/hotel/retail owner needs to see MenuFlow's 10% margin boost?"
             ],
             "success_stories": [
-                "🏆 SUCCESS: Local café increased revenue 40% using our analytics insights",
-                "🏆 SUCCESS: Restaurant chain optimized menu pricing, saved $50K annually",
-                "🏆 SUCCESS: Retail store improved inventory turnover by 60%",
-                "🏆 SUCCESS: Hotel increased occupancy rates by 25% with dynamic pricing",
-                "🏆 SUCCESS: Food truck doubled profits using location analytics"
+                "🏆 MENUFLOW SUCCESS: Local café saw 10% higher margins during weekend rush with AI pricing",
+                "🏆 REAL RESULT: Restaurant using our QR + analytics serves more guests per hour, minimal wait",
+                "🏆 SME WIN: Hotel manager uses our occupancy + feedback analytics for perfect RevPAR optimization",
+                "🏆 PROVEN: Retail shop owner gets AI alerts when beach gear demand spikes - no more stockouts!",
+                "🏆 CASE STUDY: Bar owner raised cover charges on busy weekends using our nightlife analytics module"
             ],
             "feature_highlights": [
-                "⚡ FEATURE: Real-time dashboard shows live business metrics",
-                "⚡ FEATURE: AI-powered pricing recommendations update hourly",
-                "⚡ FEATURE: Customer segmentation identifies your best clients",
-                "⚡ FEATURE: Predictive analytics forecasts demand trends",
-                "⚡ FEATURE: Automated reports save 10+ hours weekly"
+                "⚡ MENUFLOW: QR ordering + AI pricing + real-time analytics = restaurant super-tool",
+                "⚡ SME MAGIC: We integrate into your existing POS/booking systems and turn them into super-tools",
+                "⚡ AI PRICING: MenuFlow automatically adjusts prices during peak times - 10% margin boost proven",
+                "⚡ NO TECH NEEDED: Built so you don't need to be a data scientist to make smarter decisions",
+                "⚡ VERTICAL FOCUS: Dedicated modules for restaurants, hotels, retail - industry-specific features out of the box"
             ]
         }
         
         self.hashtag_sets = {
-            "primary": ["#SMEAnalytica", "#BusinessAnalytics", "#SmallBusiness"],
-            "restaurant": ["#RestaurantTech", "#MenuFlow", "#HospitalityAI", "#FoodService"],
-            "retail": ["#RetailAnalytics", "#InventoryManagement", "#RetailTech"],
-            "general": ["#DataDriven", "#BusinessGrowth", "#Entrepreneurship", "#StartupLife"],
-            "trending": ["#AI", "#MachineLearning", "#DigitalTransformation", "#Innovation"]
+            "primary": ["#SMEAnalytica", "#MenuFlow", "#AIforSMEs"],
+            "restaurant": ["#RestaurantTech", "#DynamicPricing", "#QRMenus", "#HospitalityAI"],
+            "retail": ["#RetailAnalytics", "#SmallBusiness", "#DataDriven"],
+            "hotel": ["#HotelTech", "#RevPAR", "#OccupancyAnalytics", "#HospitalityData"],
+            "general": ["#BusinessIntelligence", "#SMEGrowth", "#DataInsights", "#ProfitOptimization"],
+            "trending": ["#AI", "#RealTimeAnalytics", "#BusinessAutomation", "#TechForSMEs"]
         }
 
-    def generate_enhanced_content(self, content_type, vertical="general"):
-        """Generate enhanced content based on type and vertical"""
-        
+    def generate_enhanced_content(self, content_type, vertical="general", language="english"):
+        """Generate enhanced content based on type, vertical, and language"""
+
+        # Spanish content templates for bilingual strategy
+        spanish_templates = {
+            "value_tip": [
+                "💡 CONSEJO: Los precios dinámicos con IA pueden aumentar tus márgenes ~10% en horas pico",
+                "💡 DATO: Los menús QR + analíticas en tiempo real = más rotación de mesas y tickets más altos",
+                "💡 TRUCO: Analiza patrones de tráfico peatonal - un mapa de calor revela tus horas doradas",
+                "💡 SECRETO SME: No necesitas ser científico de datos para tomar decisiones basadas en datos"
+            ],
+            "industry_insight": [
+                "📊 DATO REAL: Usuarios de MenuFlow reportan ~10% más márgenes en horas pico gracias a precios IA",
+                "📈 TENDENCIA: 63% de restauradores planean invertir en tecnología QR - nosotros ya estamos ahí",
+                "🔍 COMPROBADO: SME Analytica convierte datos de ventas en insights accionables sin configuración compleja",
+                "📊 RESULTADO: Los primeros usuarios sirven más huéspedes por hora con tiempo de espera mínimo"
+            ]
+        }
+
+        # Use Spanish content 30% of the time for bilingual strategy
+        if language == "spanish" or (language == "auto" and random.random() < 0.3):
+            if content_type in spanish_templates:
+                return random.choice(spanish_templates[content_type])
+
         content_templates = {
             "educational_thread": {
                 "restaurant": [
@@ -183,7 +205,7 @@ class EnhancedContentStrategy:
                     # Determine vertical (restaurant focus for now)
                     vertical = random.choice(["restaurant", "retail", "general"])
                     
-                    # Generate content based on category
+                    # Generate content based on category with SME Analytica focus
                     if category == "educational":
                         content_type = random.choice(["educational_thread", "value_tip"])
                     elif category == "community":
@@ -192,9 +214,16 @@ class EnhancedContentStrategy:
                         content_type = "feature_highlight"
                     else:  # industry
                         content_type = "industry_insight"
-                    
-                    content = self.generate_enhanced_content(content_type, vertical)
+
+                    # Use bilingual strategy (30% Spanish content)
+                    language = "spanish" if random.random() < 0.3 else "english"
+
+                    content = self.generate_enhanced_content(content_type, vertical, language)
                     hashtags = self.get_optimal_hashtags(content_type, vertical)
+
+                    # Add Spanish hashtags for Spanish content
+                    if language == "spanish":
+                        hashtags.extend(["#RestaurantesTech", "#AnalíticasIA", "#PequeñasEmpresas"])
                     
                     scheduled_time = today.replace(
                         hour=time_slot["hour"],
