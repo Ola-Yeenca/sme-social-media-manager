@@ -1,0 +1,124 @@
+name: SME Analytica Social Media Automation
+
+on:
+  schedule:
+    # Run daily at 8:00 AM UTC (adjust timezone as needed)
+    - cron: '0 8 * * *'
+    # Run every 6 hours for more frequent posting
+    - cron: '0 */6 * * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Automation mode'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - post
+        - grow
+        - content
+        - analytics
+
+jobs:
+  social-media-automation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create required directories
+      run: |
+        mkdir -p logs
+        mkdir -p analytics_data
+        mkdir -p automation_logs
+    
+    - name: Run Social Media Automation
+      env:
+        # Twitter API credentials
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        
+        # Notion credentials
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
+        
+        # AI Provider credentials (optional)
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+      run: |
+        # Determine mode
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          MODE="${{ github.event.inputs.mode }}"
+        else
+          # For scheduled runs, use full automation
+          MODE="full"
+        fi
+        
+        echo "Running automation in mode: $MODE"
+        python main.py --mode=$MODE --quiet
+    
+    - name: Upload logs as artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: automation-logs-${{ github.run_number }}
+        path: |
+          logs/
+          analytics_data/
+          automation_logs/
+        retention-days: 30
+    
+    - name: Commit and push analytics data (if any)
+      if: success()
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Only commit analytics data, not logs with sensitive info
+        if [ -d "analytics_data" ] && [ "$(ls -A analytics_data)" ]; then
+          git add analytics_data/
+          git diff --staged --quiet || git commit -m "📊 Update analytics data - $(date '+%Y-%m-%d %H:%M')"
+          git push
+        fi
+
+  # Health check job to monitor automation
+  health-check:
+    runs-on: ubuntu-latest
+    needs: social-media-automation
+    if: always()
+    
+    steps:
+    - name: Check automation status
+      run: |
+        if [ "${{ needs.social-media-automation.result }}" = "success" ]; then
+          echo "✅ Social media automation completed successfully"
+        else
+          echo "❌ Social media automation failed"
+          exit 1
+        fi
+    
+    - name: Notify on failure (optional)
+      if: failure()
+      run: |
+        echo "🚨 Social media automation failed at $(date)"
+        # Add notification logic here (email, Slack, etc.) if needed
