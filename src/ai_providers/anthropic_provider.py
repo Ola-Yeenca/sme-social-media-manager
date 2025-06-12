@@ -146,32 +146,60 @@ class AnthropicProvider(BaseAIProvider):
         }.get(request.language, "Generate content in English")
         
         return f"""
-        You are creating social media content for SME Analytica, an AI-driven analytics platform for small and medium enterprises.
-        
+        You are creating social media content for SME Analytica, an AI-driven analytics and business intelligence platform built for small and medium enterprises.
+
+        COMPREHENSIVE COMPANY CONTEXT:
+        SME Analytica's mission: "understand your data, improve your pricing, and grow your business" without complex tech setup.
+        We turn raw sales, traffic and customer data into actionable insights and automation tailored for small businesses.
+
+        CORE VALUE PROPOSITION:
+        - Enterprise-level analytics made accessible to non-technical business owners
+        - AI-powered dynamic pricing that boosts margins by ~10% during peak hours (verified results)
+        - Real-time analytics without complex tech setup
+        - Seamless integration with existing POS, reservation, and accounting tools
+        - Vertical-specific modules with industry-tailored features
+
+        KEY PRODUCTS & PROVEN RESULTS:
+        1. MenuFlow (Restaurants): Smart QR menu/ordering + AI pricing + real-time analytics
+           - PROVEN: 10% higher margins during peak hours, faster table turns, higher average checks
+           - Features: Real-time menu updates, personalized recommendations, loyalty discounts
+        2. Hotel Analytics (Coming Soon): Occupancy analytics, ADR, RevPAR, guest sentiment
+        3. Retail Insights (In Development): Sales analysis, inventory turnover, customer patterns
+
+        BRAND VOICE & TONE:
+        - Conversational yet expert (like a knowledgeable consultant chatting with a business owner)
+        - Enthusiastic about data but speaking plainly
+        - Educational and engaging - make readers feel smarter
+        - Use everyday analogies, avoid heavy jargon
+        - Always root statements in data/examples and emphasize tangible ROI
+
         Task: Create a {request.content_type.value} with these specifications:
         - Theme: {request.theme}
         - Language: {language_instruction}
         - Max length: {request.max_length} characters
         - Tone: Expert but conversational, like a friendly data consultant
-        
+
         Context for this post:
         {context_str}
-        
-        SME Analytica key messages:
-        - AI-powered dynamic pricing increases restaurant margins by ~10%
-        - Real-time analytics without complex technical setup
-        - Vertical-specific solutions: MenuFlow (restaurants), Hotel Analytics, Retail Insights
-        - Built for non-technical business owners
-        - Seamless integration with existing POS and booking systems
-        
+
+        CONTENT STRATEGY BY THEME:
+        - Data Monday: Educational data tips and business insights with real SME Analytica results
+        - Talk Tuesday: Industry discussions, polls, community engagement
+        - Case Study Wednesday: Real success stories and client examples (use proven 10% margin boost)
+        - Tech Thursday: Technology features, integrations, innovations
+        - Fact Friday: Industry statistics, trends, educational content
+        - Weekend Insights: Lighter content, tips, community engagement
+
         Content guidelines:
         - Focus on practical business value and actionable insights
-        - Use data points and concrete examples when possible
+        - Use specific data points (especially the proven 10% margin boost)
+        - Reference real SME Analytica capabilities and results
         - Avoid heavy jargon - explain concepts simply
         - Include relevant hashtags naturally
-        - Position SME Analytica as the helpful AI analyst for small businesses
-        
-        Create engaging content that educates and inspires SME owners.
+        - Position SME Analytica as the helpful AI analyst that delivers real results
+        - Make business owners feel smarter and more confident about using data
+
+        Create engaging content that educates, inspires, and showcases SME Analytica's proven value.
         """
     
     def _extract_hashtags(self, text: str, suggested_hashtags: List[str]) -> List[str]:

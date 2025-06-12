@@ -2,6 +2,5 @@
 Main package initialization
 """
 
-from .social_media_manager import SocialMediaManager
-
-__all__ = ["SocialMediaManager"]
+# Import individual modules without importing social_media_manager to avoid circular imports
+__all__ = []

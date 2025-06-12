@@ -43,12 +43,28 @@ class NotionManager:
     
     def __init__(self):
         self.client = Client(auth=settings.notion_api_key)
-        self.social_media_db_id = settings.social_media_db_id
-        self.local_businesses_db_id = settings.local_businesses_db_id
+        self.social_media_db_id = self._format_notion_id(settings.social_media_db_id)
+        self.local_businesses_db_id = self._format_notion_id(settings.local_businesses_db_id) if settings.local_businesses_db_id else None
         self.logger = logging.getLogger(__name__)
-        
+
         # Test connection on initialization
         self._test_connection()
+
+    def _format_notion_id(self, notion_id: str) -> str:
+        """Format Notion ID with proper hyphens for API calls"""
+        if not notion_id:
+            return notion_id
+
+        # Remove any existing hyphens
+        clean_id = notion_id.replace('-', '')
+
+        # Add hyphens in the correct positions for Notion UUID format
+        if len(clean_id) == 32:
+            formatted_id = f"{clean_id[:8]}-{clean_id[8:12]}-{clean_id[12:16]}-{clean_id[16:20]}-{clean_id[20:]}"
+            return formatted_id
+
+        # Return as-is if not the expected length
+        return notion_id
     
     def _test_connection(self):
         """Test the Notion API connection"""
@@ -356,7 +372,7 @@ class NotionManager:
             properties = page.get('properties', {})
 
             # Extract basic properties - using new database structure
-            name = self._extract_title(properties.get('Name', {}))  # Name field
+            name = self._extract_title(properties.get('title', {}))  # title field
             content = self._extract_rich_text(properties.get('Content', {}))
             status = self._extract_select(properties.get('Status', {})) or "Draft"
             platform = self._extract_select(properties.get('Platform', {})) or "Twitter"

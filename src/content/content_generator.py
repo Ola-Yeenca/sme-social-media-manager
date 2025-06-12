@@ -7,11 +7,30 @@ from datetime import datetime, timedelta
 from enum import Enum
 import random
 import re
-from langdetect import detect
+# Language detection with fallback
+try:
+    from langdetect import detect
+except ImportError:
+    def detect(text):
+        """Simple language detection fallback"""
+        spanish_keywords = ['restaurante', 'negocio', 'datos', 'análisis']
+        text_lower = text.lower()
+        if any(keyword in text_lower for keyword in spanish_keywords):
+            return 'es'
+        return 'en'  # Default to English
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from config.settings import SMEAnalyticaContext, ContentTheme, Language
+
+# Import viral optimization module
+try:
+    from src.content.viral_optimization import ViralOptimizationAgent, ViralContent, TrendingTopic
+except ImportError:
+    # Fallback if viral optimization not available
+    ViralOptimizationAgent = None
+    ViralContent = None
+    TrendingTopic = None
 
 class ContentCategory(str, Enum):
     EDUCATIONAL = "educational"
@@ -48,27 +67,49 @@ class ContentTemplate:
             ContentTheme.DATA_MONDAY: [
                 "📊 Data Monday: {insight} At SME Analytica, we've seen {statistic}. {call_to_action} {hashtags}",
                 "💡 Monday Insight: {data_tip} Our AI analytics help {target_audience} {benefit}. {hashtags}",
-                "🎯 Data-Driven Monday: {business_insight} With MenuFlow, restaurants see {specific_result}. {hashtags}"
+                "🎯 Data-Driven Monday: {business_insight} With MenuFlow, restaurants see {specific_result}. {hashtags}",
+                "📈 Data Tip Monday: Did you know? {data_point} can {business_impact}. SME Analytica makes this simple for {target_audience}. {hashtags}",
+                "🔍 Monday Analytics: {industry_insight} Our early tests show {proven_result}. {actionable_advice} {hashtags}",
+                "💰 Revenue Monday: {pricing_insight} MenuFlow's AI-driven pricing helped restaurants boost margins ~10% during peak hours. {hashtags}"
             ],
             ContentTheme.TECH_THURSDAY: [
                 "🚀 Tech Thursday: {tech_feature} SME Analytica's {solution} {integration_benefit}. {hashtags}",
                 "⚡ Thursday Tech Tip: {technical_insight} Our platform {ease_of_use}. {hashtags}",
-                "🔧 Technology Update: {innovation} Real-time analytics made simple for {target_market}. {hashtags}"
+                "🔧 Technology Update: {innovation} Real-time analytics made simple for {target_market}. {hashtags}",
+                "🛠️ Tech Thursday: {integration_feature} We integrate into your existing systems and turn your tools into super-tools. {hashtags}",
+                "⚙️ Innovation Thursday: {ai_feature} No data science degree required - just actionable insights for your business. {hashtags}",
+                "🔗 Integration Thursday: {seamless_integration} SME Analytica connects with your POS, booking, and accounting systems. {hashtags}"
             ],
             ContentTheme.CASE_WEDNESDAY: [
                 "📈 Case Study Wednesday: {business_name} {challenge_solved} using {sme_solution}. Result: {outcome}. {hashtags}",
                 "🏆 Success Story: {client_example} {problem_statement} With SME Analytica, they achieved {specific_improvement}. {hashtags}",
-                "💼 Real Results: {case_study_intro} {data_driven_solution} {measurable_outcome}. {hashtags}"
+                "💼 Real Results: {case_study_intro} {data_driven_solution} {measurable_outcome}. {hashtags}",
+                "🎯 Case Wednesday: Meet {restaurant_name}: {business_challenge} With MenuFlow's AI analytics: {transformation_result}. {hashtags}",
+                "📊 Success Story: {small_business} struggled with {pricing_challenge}. MenuFlow's dynamic pricing delivered {margin_improvement}. {hashtags}",
+                "🏪 Real Results Wednesday: {business_example} used SME Analytica to {business_improvement}. Outcome: {revenue_impact} in {timeframe}. {hashtags}"
             ],
             ContentTheme.FACT_FRIDAY: [
                 "💡 Fun Fact Friday: {interesting_statistic} {industry_context} {sme_analytica_connection}. {hashtags}",
                 "🎲 Friday Fact: Did you know {surprising_data}? {business_relevance} {how_we_help}. {hashtags}",
-                "📚 Fact Check Friday: {data_point} {industry_trend} {actionable_insight}. {hashtags}"
+                "📚 Fact Check Friday: {data_point} {industry_trend} {actionable_insight}. {hashtags}",
+                "🔢 Fact Friday: {restaurant_statistic} MenuFlow's AI pricing helps restaurants capture this opportunity automatically. {hashtags}",
+                "📈 Data Friday: {business_insight} SME Analytica turns this challenge into competitive advantage for small businesses. {hashtags}",
+                "💰 Friday Insight: {revenue_fact} Our dynamic pricing technology helps SMEs maximize these peak opportunities. {hashtags}"
             ],
             ContentTheme.TALK_TUESDAY: [
                 "🗣️ Talk Tuesday: {industry_question} What's your experience with {relevant_topic}? {hashtags}",
                 "💬 Tuesday Discussion: {poll_question} Share your thoughts on {business_challenge}! {hashtags}",
-                "🤔 Let's Talk: {conversation_starter} How do you handle {common_problem}? {hashtags}"
+                "🤔 Let's Talk: {conversation_starter} How do you handle {common_problem}? {hashtags}",
+                "🤝 Talk Tuesday: Restaurant owners - {restaurant_question} Share your pricing strategies! {hashtags}",
+                "💭 Tuesday Chat: {sme_question} What's your biggest analytics challenge? Let's discuss solutions! {hashtags}",
+                "🗨️ Community Tuesday: {business_discussion} How do you use data to make decisions? {hashtags}"
+            ],
+            ContentTheme.WEEKEND_INSIGHTS: [
+                "🌟 Weekend Insight: {weekend_tip} Small changes, big impact with SME Analytica. {hashtags}",
+                "☕ Saturday Thought: {business_wisdom} Data doesn't have to be complicated to be powerful. {hashtags}",
+                "🎯 Sunday Strategy: {strategic_insight} Start your week with actionable analytics. {hashtags}",
+                "🌅 Weekend Wisdom: {weekend_insight} SME Analytica makes enterprise-level analytics accessible to everyone. {hashtags}",
+                "🍃 Relaxed Insight: {casual_tip} Sometimes the best business decisions come from simple data observations. {hashtags}"
             ]
         }
         
@@ -113,11 +154,23 @@ class ContentTemplate:
         return templates.get(self.theme, templates[ContentTheme.DATA_MONDAY])
 
 class ContentGenerator:
-    """Main content generation engine"""
+    """Main content generation engine with viral optimization"""
     
-    def __init__(self):
+    def __init__(self, twitter_manager=None):
         self.context = SMEAnalyticaContext()
         self.content_variables = self._initialize_content_variables()
+        
+        # Initialize viral optimization if available
+        self.viral_agent = None
+        if ViralOptimizationAgent and twitter_manager:
+            try:
+                self.viral_agent = ViralOptimizationAgent(twitter_manager)
+            except Exception as e:
+                print(f"Warning: Could not initialize viral optimization: {e}")
+        
+        # Viral enhancement flags
+        self.use_viral_hooks = True
+        self.monitor_trends = True
     
     def _initialize_content_variables(self) -> Dict[str, List[str]]:
         """Initialize content variables for template substitution"""
@@ -253,6 +306,16 @@ class ContentGenerator:
             variables["client_example"] = "Restaurant Bella Vista"
             variables["problem_statement"] = "struggled with peak-hour pricing"
             variables["specific_improvement"] = "10% margin increase"
+            variables["restaurant_name"] = random.choice(["Café Luna", "Bistro Verde", "Restaurant Bella Vista", "Local Tapas Bar"])
+            variables["business_challenge"] = random.choice(["struggled with fluctuating demand", "needed better pricing strategy", "wanted to optimize table turnover"])
+            variables["transformation_result"] = random.choice(["10% higher margins during peak hours", "15% faster table turns", "25% revenue boost in 3 months"])
+            variables["small_business"] = random.choice(["Local restaurant owner Maria", "Café owner Carlos", "Small hotel manager Ana"])
+            variables["pricing_challenge"] = random.choice(["peak-hour demand management", "competitive pricing strategy", "seasonal pricing optimization"])
+            variables["margin_improvement"] = random.choice(["10% margin increase", "15% revenue boost", "20% efficiency improvement"])
+            variables["business_example"] = random.choice(["Family restaurant Casa Blanca", "Boutique Hotel Vista", "Corner Café Express"])
+            variables["business_improvement"] = random.choice(["optimize their pricing strategy", "increase table turnover", "boost peak-hour revenue"])
+            variables["revenue_impact"] = random.choice(["25% revenue increase", "30% margin improvement", "20% efficiency boost"])
+            variables["timeframe"] = random.choice(["3 months", "6 weeks", "2 months"])
             
         elif theme == ContentTheme.FACT_FRIDAY:
             variables["interesting_statistic"] = "87% of restaurants plan to invest in AI technology this year"
@@ -269,6 +332,48 @@ class ContentGenerator:
             variables["business_challenge"] = "peak-hour demand management"
             variables["conversation_starter"] = "Restaurant owners: what's your pricing strategy?"
             variables["common_problem"] = "fluctuating customer demand"
+            variables["restaurant_question"] = random.choice([
+                "How do you handle peak hour pricing?",
+                "What's your biggest operational challenge?",
+                "How do you track customer satisfaction?"
+            ])
+            variables["sme_question"] = random.choice([
+                "What data do you wish you had access to?",
+                "How do you make pricing decisions?",
+                "What's your biggest business analytics pain point?"
+            ])
+            variables["business_discussion"] = random.choice([
+                "Small business owners:",
+                "Restaurant managers:",
+                "Retail entrepreneurs:"
+            ])
+
+        elif theme == ContentTheme.WEEKEND_INSIGHTS:
+            variables["weekend_tip"] = random.choice([
+                "Track your weekend vs weekday performance patterns",
+                "Use quiet moments to analyze your data trends",
+                "Weekend planning starts with Monday's analytics"
+            ])
+            variables["business_wisdom"] = random.choice([
+                "The best insights often come from simple observations",
+                "Smart businesses use data, not just intuition",
+                "Analytics should inform decisions, not complicate them"
+            ])
+            variables["strategic_insight"] = random.choice([
+                "Plan your week with data-driven goals",
+                "Review last week's performance to improve this week",
+                "Set analytics-based targets for better results"
+            ])
+            variables["weekend_insight"] = random.choice([
+                "Weekend downtime is perfect for reviewing your business data",
+                "The most successful SMEs use analytics as their competitive edge",
+                "Simple data insights can transform your business operations"
+            ])
+            variables["casual_tip"] = random.choice([
+                "Your POS data tells a story - are you listening?",
+                "Peak hours aren't just busy times, they're profit opportunities",
+                "Customer patterns reveal hidden revenue potential"
+            ])
         
         # Generate hashtags string
         hashtags = self._generate_hashtags(theme, language)
@@ -411,3 +516,214 @@ class ContentGenerator:
             })
         
         return calendar
+    
+    async def generate_viral_optimized_content(self, theme: Optional[ContentTheme] = None, 
+                                             language: Language = Language.ENGLISH,
+                                             use_trending_topics: bool = True) -> Dict[str, Any]:
+        """Generate content optimized for viral spread"""
+        
+        if not self.viral_agent:
+            # Fallback to regular content generation
+            return self.generate_themed_content(theme or ContentTheme.DATA_MONDAY, language)
+        
+        try:
+            # Get trending topics if requested
+            trending_topic = None
+            if use_trending_topics and self.monitor_trends:
+                trending_topics = await self.viral_agent.monitor_trending_topics()
+                if trending_topics:
+                    # Select best trending topic
+                    # Calculate combined score for trending topic selection
+                    def calculate_trend_score(t):
+                        potential_scores = {"low": 1, "medium": 2, "high": 3, "viral": 4}
+                        potential_score = potential_scores.get(str(t.viral_potential), 1)
+                        return t.relevance_score * potential_score
+                    
+                    trending_topic = max(trending_topics, key=calculate_trend_score)
+            
+            # Generate viral content
+            viral_content = await self.viral_agent.generate_viral_content(
+                trend=trending_topic,
+                content_type="general"
+            )
+            
+            # Convert to standard format
+            return {
+                "text": viral_content.text,
+                "hashtags": viral_content.hashtags,
+                "theme": theme or ContentTheme.DATA_MONDAY,
+                "language": language,
+                "category": ContentCategory.EDUCATIONAL,
+                "viral_optimized": True,
+                "viral_score": viral_content.viral_score,
+                "estimated_reach": viral_content.estimated_reach,
+                "trending_topic": trending_topic.topic if trending_topic else None,
+                "shareability_factors": viral_content.shareability_factors
+            }
+            
+        except Exception as e:
+            print(f"Error generating viral content, falling back to regular: {e}")
+            return self.generate_themed_content(theme or ContentTheme.DATA_MONDAY, language)
+    
+    async def generate_viral_thread(self, topic: Optional[str] = None) -> Dict[str, Any]:
+        """Generate a viral thread for maximum engagement"""
+        
+        if not self.viral_agent:
+            return {"error": "Viral optimization not available"}
+        
+        try:
+            # Get trending topic related to the requested topic
+            trending_topic = None
+            if topic and self.monitor_trends:
+                trending_topics = await self.viral_agent.monitor_trending_topics()
+                # Find best matching trend
+                for trend in trending_topics:
+                    if topic.lower() in trend.topic.lower() or trend.industry_connection == "direct":
+                        trending_topic = trend
+                        break
+            
+            # Generate viral thread
+            viral_content = await self.viral_agent.generate_viral_content(
+                trend=trending_topic,
+                content_type="thread"
+            )
+            
+            return {
+                "thread_text": viral_content.text,
+                "hashtags": viral_content.hashtags,
+                "viral_score": viral_content.viral_score,
+                "estimated_reach": viral_content.estimated_reach,
+                "thread_potential": viral_content.thread_potential,
+                "shareability_factors": viral_content.shareability_factors,
+                "trending_topic": trending_topic.topic if trending_topic else None
+            }
+            
+        except Exception as e:
+            return {"error": f"Failed to generate viral thread: {e}"}
+    
+    def enhance_content_with_viral_hooks(self, content: str) -> str:
+        """Enhance existing content with viral hooks"""
+        
+        if not self.viral_agent or not self.use_viral_hooks:
+            return content
+        
+        try:
+            # Select a viral hook that matches content theme
+            relevant_hooks = [hook for hook in self.viral_agent.viral_hooks 
+                            if hook.viral_score > 7.0]
+            
+            if relevant_hooks:
+                # Use highest scoring hook
+                best_hook = max(relevant_hooks, key=lambda h: h.viral_score)
+                
+                # Check if content already has a strong opening
+                if not any(opener in content.lower() for opener in 
+                          ["here's", "the secret", "why", "how", "what"]):
+                    
+                    # Prepend viral hook
+                    enhanced_content = f"{best_hook.hook_text}\n\n{content}"
+                    
+                    # Ensure it fits Twitter limits
+                    if len(enhanced_content) <= 280:
+                        return enhanced_content
+            
+            return content
+            
+        except Exception as e:
+            print(f"Error enhancing content with viral hooks: {e}")
+            return content
+    
+    async def get_viral_opportunities_for_day(self, date: Optional[datetime] = None) -> List[Dict[str, Any]]:
+        """Get viral content opportunities for a specific day"""
+        
+        if not self.viral_agent:
+            return []
+        
+        try:
+            opportunities = await self.viral_agent.get_daily_viral_opportunities(count=10)
+            
+            # Convert to standard format
+            formatted_opportunities = []
+            for opp in opportunities:
+                formatted_opp = {
+                    "type": opp["type"],
+                    "priority": opp["priority"],
+                    "posting_time": opp["optimal_posting_time"],
+                    "content": {
+                        "text": opp["content"].text,
+                        "hashtags": opp["content"].hashtags,
+                        "viral_score": opp["content"].viral_score,
+                        "estimated_reach": opp["content"].estimated_reach
+                    },
+                    "expected_engagement": opp["expected_engagement"]
+                }
+                
+                if opp["trend"]:
+                    formatted_opp["trend"] = {
+                        "topic": opp["trend"].topic,
+                        "viral_potential": opp["trend"].viral_potential,
+                        "relevance_score": opp["trend"].relevance_score
+                    }
+                
+                formatted_opportunities.append(formatted_opp)
+            
+            return formatted_opportunities
+            
+        except Exception as e:
+            print(f"Error getting viral opportunities: {e}")
+            return []
+    
+    async def analyze_hashtag_performance(self, hashtags: List[str]) -> Dict[str, Any]:
+        """Analyze hashtag viral potential"""
+        
+        if not self.viral_agent:
+            return {"error": "Viral analysis not available"}
+        
+        try:
+            analysis = await self.viral_agent.analyze_hashtag_viral_potential(hashtags)
+            return {
+                "analysis_timestamp": datetime.now(),
+                "hashtag_analysis": analysis,
+                "recommendations": self._generate_hashtag_recommendations(analysis)
+            }
+            
+        except Exception as e:
+            return {"error": f"Failed to analyze hashtags: {e}"}
+    
+    def _generate_hashtag_recommendations(self, analysis: Dict[str, Any]) -> List[str]:
+        """Generate hashtag recommendations based on analysis"""
+        
+        recommendations = []
+        
+        for hashtag, data in analysis.items():
+            if isinstance(data, dict) and "viral_potential" in data:
+                if data["viral_potential"] == "viral":
+                    recommendations.append(f"🔥 {hashtag}: High viral potential - use immediately!")
+                elif data["viral_potential"] == "high":
+                    recommendations.append(f"⚡ {hashtag}: Good potential - recommended for important posts")
+                elif data["viral_potential"] == "low" and data.get("volume", 0) < 10:
+                    recommendations.append(f"⚠️ {hashtag}: Low activity - consider alternatives")
+        
+        return recommendations
+    
+    def get_viral_analytics_summary(self) -> Dict[str, Any]:
+        """Get summary of viral optimization performance"""
+        
+        if not self.viral_agent:
+            return {"viral_optimization": "Not available"}
+        
+        try:
+            return self.viral_agent.get_viral_analytics_dashboard()
+        except Exception as e:
+            return {"error": f"Failed to get viral analytics: {e}"}
+    
+    def toggle_viral_features(self, use_viral_hooks: Optional[bool] = None, monitor_trends: Optional[bool] = None):
+        """Toggle viral optimization features"""
+        
+        if use_viral_hooks is not None:
+            self.use_viral_hooks = use_viral_hooks
+        
+        if monitor_trends is not None:
+            self.monitor_trends = monitor_trends
+        
+        print(f"Viral features updated: hooks={self.use_viral_hooks}, trends={self.monitor_trends}")
