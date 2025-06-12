@@ -105,9 +105,19 @@ async def run_enhanced_automation() -> Dict[str, Any]:
             from config.settings import ContentTheme, Language
             
             generator = GrowthOptimizedContentGenerator()
-            
-            # Generate content for today's theme
-            today_theme = ContentTheme.DATA_MONDAY  # Would be dynamic based on day
+
+            # Generate content for today's theme (dynamic based on day)
+            weekday = datetime.now().weekday()  # 0=Monday, 6=Sunday
+            theme_map = {
+                0: ContentTheme.DATA_MONDAY,
+                1: ContentTheme.TALK_TUESDAY,
+                2: ContentTheme.CASE_STUDY_WEDNESDAY,
+                3: ContentTheme.TECH_THURSDAY,
+                4: ContentTheme.FEATURE_FRIDAY,
+                5: ContentTheme.SUCCESS_SATURDAY,
+                6: ContentTheme.STRATEGY_SUNDAY
+            }
+            today_theme = theme_map.get(weekday, ContentTheme.DATA_MONDAY)
             content = generator.generate_viral_optimized_content(
                 theme=today_theme,
                 growth_strategy=GrowthStrategy.VIRAL_POTENTIAL,
@@ -142,13 +152,41 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 tweet_text = content["text"]
                 hashtags = " ".join(content["hashtags"])
                 full_tweet = f"{tweet_text} {hashtags}"
-                
-                # Post to Twitter (commented out for demo - uncomment for production)
-                # post_result = await twitter.post_tweet(full_tweet)
-                # results["posts_published"] = 1
-                
-                logger.info("✅ Content ready for posting (demo mode)")
-                results["posts_published"] = 1  # Simulated for demo
+
+                # Post to Twitter (PRODUCTION MODE)
+                post_result = await twitter.post_tweet(full_tweet)
+
+                if post_result:
+                    results["posts_published"] = 1
+                    logger.info(f"✅ Tweet posted successfully: {post_result}")
+
+                    # Save to Notion database
+                    try:
+                        from notion import NotionManager
+                        notion = NotionManager()
+
+                        # Create post entry in Notion
+                        notion_post = notion.create_post(
+                            content=tweet_text,
+                            hashtags=content["hashtags"],
+                            platform="Twitter",
+                            status="Published",
+                            tweet_id=post_result,
+                            viral_score=content['predicted_metrics'].virality_score,
+                            theme=str(today_theme)
+                        )
+
+                        if notion_post:
+                            logger.info("✅ Post saved to Notion database")
+                        else:
+                            logger.warning("⚠️ Failed to save post to Notion")
+
+                    except Exception as notion_error:
+                        logger.error(f"❌ Notion save failed: {notion_error}")
+                        results["errors"].append(f"notion_save: {notion_error}")
+                else:
+                    logger.error("❌ Failed to post tweet")
+                    results["errors"].append("twitter_posting: Failed to post tweet")
             
             results["systems_active"].append("twitter_posting")
             

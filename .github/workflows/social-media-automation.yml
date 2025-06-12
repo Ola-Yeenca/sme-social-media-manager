@@ -2,10 +2,15 @@ name: SME Analytica Social Media Automation
 
 on:
   schedule:
-    # Run daily at 8:00 AM UTC (adjust timezone as needed)
+    # Optimal posting times for Madrid timezone (UTC times)
+    # 9:00 AM Madrid (8:00 AM UTC) - Morning engagement
     - cron: '0 8 * * *'
-    # Run every 6 hours for more frequent posting
-    - cron: '0 */6 * * *'
+    # 1:00 PM Madrid (12:00 PM UTC) - Lunch break peak
+    - cron: '0 12 * * *'
+    # 6:00 PM Madrid (5:00 PM UTC) - Evening commute peak
+    - cron: '0 17 * * *'
+    # 9:00 PM Madrid (8:00 PM UTC) - Evening social media peak
+    - cron: '0 20 * * *'
   
   # Allow manual triggering
   workflow_dispatch:
@@ -69,11 +74,12 @@ jobs:
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           MODE="${{ github.event.inputs.mode }}"
         else
-          # For scheduled runs, use enhanced automation
+          # For scheduled runs, use enhanced automation for viral content
           MODE="enhanced"
         fi
-        
+
         echo "Running automation in mode: $MODE"
+        echo "Posting time (Madrid): $(TZ='Europe/Madrid' date '+%Y-%m-%d %H:%M %Z')"
         python main.py --mode=$MODE --quiet
     
     - name: Upload logs as artifacts
