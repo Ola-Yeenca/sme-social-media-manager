@@ -126,8 +126,16 @@ async def run_enhanced_automation() -> Dict[str, Any]:
         logger.info("📤 Publishing content to Twitter...")
         try:
             from social.twitter_manager import TwitterManager
-            
-            twitter = TwitterManager()
+
+            # Initialize Twitter manager with credentials
+            credentials = {
+                "api_key": os.getenv("TWITTER_API_KEY"),
+                "api_secret": os.getenv("TWITTER_API_SECRET"),
+                "access_token": os.getenv("TWITTER_ACCESS_TOKEN"),
+                "access_token_secret": os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
+                "bearer_token": os.getenv("TWITTER_BEARER_TOKEN")
+            }
+            twitter = TwitterManager(credentials)
             
             if results["content_generated"] > 0:
                 # Use generated content

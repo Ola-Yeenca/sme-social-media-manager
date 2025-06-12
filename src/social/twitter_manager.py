@@ -42,20 +42,21 @@ class TwitterManager:
         self.access_token = api_credentials["access_token"]
         self.access_token_secret = api_credentials["access_token_secret"]
         self.bearer_token = api_credentials["bearer_token"]
-        
+
+        # Initialize logger first
+        self.logger = logging.getLogger(__name__)
+
         # Initialize Tweepy clients
         self._initialize_clients()
-        
+
         # Rate limiting
         self.last_tweet_time = None
         self.min_interval_between_tweets = 300  # 5 minutes
-        
+
         # Engagement tracking
         self.daily_engagement_count = 0
         self.daily_engagement_limit = 50
         self.last_engagement_reset = datetime.now().date()
-        
-        self.logger = logging.getLogger(__name__)
     
     def _initialize_clients(self):
         """Initialize Twitter API clients"""

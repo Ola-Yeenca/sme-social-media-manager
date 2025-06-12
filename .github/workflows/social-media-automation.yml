@@ -13,12 +13,11 @@ on:
       mode:
         description: 'Automation mode'
         required: true
-        default: 'full'
+        default: 'enhanced'
         type: choice
         options:
-        - full
-        - post
-        - grow
+        - enhanced
+        - basic
         - content
         - analytics
 
@@ -70,8 +69,8 @@ jobs:
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           MODE="${{ github.event.inputs.mode }}"
         else
-          # For scheduled runs, use full automation
-          MODE="full"
+          # For scheduled runs, use enhanced automation
+          MODE="enhanced"
         fi
         
         echo "Running automation in mode: $MODE"
