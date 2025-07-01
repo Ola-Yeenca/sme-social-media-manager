@@ -72,8 +72,8 @@ jobs:
     
     - name: Test system components
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
         TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
         TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
         TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
@@ -89,8 +89,8 @@ jobs:
     
     - name: Run automation based on trigger
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
         TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
         TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
         TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
@@ -125,23 +125,23 @@ jobs:
         case $ACTION in
           "daily")
             echo "Running full daily automation..."
-            python scripts/run_social_manager.py daily
+            python3 main.py --mode=enhanced --quiet
             ;;
           "content")
             echo "Generating content for the day..."
-            python scripts/run_social_manager.py content
+            python3 main.py --mode=content --quiet
             ;;
           "engagement")
             echo "Running engagement automation..."
-            python scripts/run_social_manager.py engagement
+            python3 main.py --mode=basic --quiet
             ;;
           "post_now")
             echo "Posting scheduled content now..."
-            python scripts/post_scheduled_content.py
+            python3 main.py --mode=enhanced --quiet
             ;;
           "test")
             echo "Running system test..."
-            python scripts/run_social_manager.py test
+            python3 main.py --status
             ;;
           *)
             echo "Unknown action: $ACTION"
