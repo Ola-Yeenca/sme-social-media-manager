@@ -213,9 +213,9 @@ async def run_enhanced_automation() -> Dict[str, Any]:
         # 4. Community engagement (simplified for demo)
         logger.info("🤝 Processing community engagement...")
         try:
-            from community.influencer_targeting import InfluencerTargetingSystem
+            from community.influencer_targeting import InfluencerTargeting
             
-            engagement_system = InfluencerTargetingSystem()
+            engagement_system = InfluencerTargeting()
             # In production, this would find and engage with real opportunities
             results["engagements_completed"] = 5  # Simulated
             results["systems_active"].append("community_engagement")
@@ -371,7 +371,7 @@ def print_status():
         systems_status["Analytics Dashboard"] = "❌ Not Available"
     
     try:
-        from community.influencer_targeting import InfluencerTargetingSystem
+        from community.influencer_targeting import InfluencerTargeting
         systems_status["Community Engagement"] = "✅ Available"
     except:
         systems_status["Community Engagement"] = "❌ Not Available"
