@@ -307,9 +307,13 @@ class GrowthOptimizedContentGenerator:
         # Calculate metrics
         metrics = self._calculate_growth_metrics(content, growth_strategy)
         
+        # Generate hashtags and remove duplicates
+        hashtags = self._generate_growth_hashtags(theme, growth_strategy, language)
+        unique_hashtags = list(dict.fromkeys(hashtags))  # Remove duplicates while preserving order
+
         return {
             "text": content,
-            "hashtags": self._generate_growth_hashtags(theme, growth_strategy, language),
+            "hashtags": unique_hashtags,
             "theme": theme,
             "language": language,
             "growth_strategy": growth_strategy,
@@ -442,9 +446,10 @@ class GrowthOptimizedContentGenerator:
             "result_3": "$2,800 monthly boost"
         }
         
-        # Generate hashtags string
+        # Generate hashtags string (remove duplicates)
         hashtags = self._generate_growth_hashtags(theme, growth_strategy, language)
-        growth_variables["hashtags"] = " ".join(hashtags)
+        unique_hashtags = list(dict.fromkeys(hashtags))  # Remove duplicates while preserving order
+        growth_variables["hashtags"] = " ".join(unique_hashtags)
         
         # Merge base and growth variables
         return {**base_variables, **growth_variables}

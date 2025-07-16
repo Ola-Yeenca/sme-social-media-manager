@@ -18,6 +18,19 @@ import argparse
 import logging
 import json
 from datetime import datetime
+
+# Load environment variables from .env file for local development
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Manual .env loading as fallback
+    if os.path.exists('.env'):
+        with open('.env', 'r') as f:
+            for line in f:
+                if line.strip() and not line.startswith('#'):
+                    key, value = line.strip().split('=', 1)
+                    os.environ[key] = value.strip('"').strip("'")
 from typing import Dict, Any, Optional
 
 # Add src to path
@@ -59,26 +72,29 @@ def setup_logging(quiet: bool = False):
 
 def validate_environment() -> bool:
     """Validate required environment variables"""
-    
-    required_vars = [
-        'TWITTER_API_KEY',
-        'TWITTER_API_SECRET', 
-        'TWITTER_ACCESS_TOKEN',
-        'TWITTER_ACCESS_TOKEN_SECRET',
-        'NOTION_API_KEY',
-        'SOCIAL_MEDIA_DB_ID'
-    ]
-    
+
+    # Check Twitter credentials
+    twitter_vars = ['TWITTER_API_KEY', 'TWITTER_API_SECRET', 'TWITTER_ACCESS_TOKEN', 'TWITTER_ACCESS_TOKEN_SECRET']
     missing_vars = []
-    for var in required_vars:
+
+    for var in twitter_vars:
         if not os.getenv(var):
             missing_vars.append(var)
-    
+
+    # Check Notion credentials (support both naming conventions)
+    notion_token = os.getenv('NOTION_API_KEY') or os.getenv('NOTION_TOKEN')
+    notion_db = os.getenv('SOCIAL_MEDIA_DB_ID') or os.getenv('NOTION_DATABASE_ID')
+
+    if not notion_token:
+        missing_vars.append('NOTION_API_KEY or NOTION_TOKEN')
+    if not notion_db:
+        missing_vars.append('SOCIAL_MEDIA_DB_ID or NOTION_DATABASE_ID')
+
     if missing_vars:
         print(f"❌ Missing required environment variables: {', '.join(missing_vars)}")
         print("Please check your .env file")
         return False
-    
+
     return True
 
 async def run_enhanced_automation() -> Dict[str, Any]:
@@ -148,10 +164,27 @@ async def run_enhanced_automation() -> Dict[str, Any]:
             twitter = TwitterManager(credentials)
             
             if results["content_generated"] > 0:
-                # Use generated content
+                # Use generated content and clean it up
                 tweet_text = content["text"]
-                hashtags = " ".join(content["hashtags"])
-                full_tweet = f"{tweet_text} {hashtags}"
+
+                # Remove duplicate hashtags and ensure proper formatting
+                unique_hashtags = list(dict.fromkeys(content["hashtags"]))  # Remove duplicates
+                hashtag_text = " ".join(unique_hashtags)
+
+                # Check if hashtags are already in the text
+                if any(tag in tweet_text for tag in unique_hashtags):
+                    full_tweet = tweet_text  # Hashtags already included
+                else:
+                    full_tweet = f"{tweet_text} {hashtag_text}"
+
+                # Ensure tweet is under 280 characters
+                if len(full_tweet) > 280:
+                    # Truncate text and add essential hashtags
+                    available_length = 280 - len(hashtag_text) - 4  # 4 for " ..."
+                    truncated_text = tweet_text[:available_length] + "..."
+                    full_tweet = f"{truncated_text} {hashtag_text}"
+
+                logger.info(f"📝 Final tweet ({len(full_tweet)} chars): {full_tweet}")
 
                 # Post to Twitter (PRODUCTION MODE)
                 post_result = await twitter.post_tweet(full_tweet)
