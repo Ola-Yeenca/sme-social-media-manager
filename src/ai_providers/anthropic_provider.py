@@ -199,6 +199,17 @@ class AnthropicProvider(BaseAIProvider):
         - Position SME Analytica as the helpful AI analyst that delivers real results
         - Make business owners feel smarter and more confident about using data
 
+        VIRAL OPTIMIZATION REQUIREMENTS:
+        - Create COMPLETELY UNIQUE content - no repeated phrases, structures, or approaches
+        - Vary your opening style: questions, bold statements, data reveals, stories, contrarian takes
+        - Use different restaurant names, scenarios, and business challenges each time
+        - Be genuinely insightful about real restaurant/SME business problems
+        - Include surprising, non-obvious insights that make people think differently
+        - Avoid formulaic hooks - create fresh, engaging openings every time
+        - Focus on practical wisdom that restaurant owners would actually find valuable
+        - Make each post feel like it comes from a different expert perspective
+        - Create content that sparks genuine discussion and sharing
+
         Create engaging content that educates, inspires, and showcases SME Analytica's proven value.
         """
     

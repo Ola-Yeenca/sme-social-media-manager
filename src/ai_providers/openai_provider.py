@@ -133,11 +133,16 @@ class OpenAIProvider(BaseAIProvider):
         Context:
         {context_str}
         
-        Requirements:
-        - Focus on SME business analytics and AI insights
-        - Include relevant hashtags naturally
-        - Be educational and engaging
-        - Highlight practical business value
+        CRITICAL REQUIREMENTS:
+        - Create COMPLETELY UNIQUE content - no repeated phrases, structures, or hooks
+        - Vary your opening: questions, bold statements, data reveals, stories, contrarian takes
+        - Use different restaurant names, scenarios, and data points each time
+        - Be genuinely insightful about real restaurant business challenges
+        - Include surprising, non-obvious insights that make people think
+        - Focus on practical business value with fresh perspectives
+        - Make each post feel like it comes from a different expert/angle
+        - Avoid formulaic "This will shock you" or similar repetitive openings
+        - Create content that restaurant owners would actually want to share
         """
     
     def _get_system_prompt(self, request: ContentRequest) -> str:
@@ -184,6 +189,16 @@ class OpenAIProvider(BaseAIProvider):
         - Tech Thursday: Technology features, integrations, innovations
         - Fact Friday: Industry statistics, trends, educational content
         - Weekend Insights: Lighter content, tips, community engagement
+
+        VIRAL OPTIMIZATION GUIDELINES:
+        - NEVER repeat the same hook, structure, or opening line
+        - Vary your approach: data insights, personal stories, industry secrets, surprising facts, contrarian takes
+        - Use different restaurant names and scenarios each time
+        - Mix content types: case studies, industry insights, behind-the-scenes, data revelations, trend analysis
+        - Vary emotional hooks: surprise, curiosity, controversy, inspiration, urgency, exclusivity
+        - Include diverse data points beyond just "10% margin boost"
+        - Create thought-provoking content that sparks discussion
+        - Be genuinely insightful about restaurant/SME business challenges
 
         Always provide actionable insights, use specific data points (especially the proven 10% margin boost),
         and position SME Analytica as the friendly AI analyst that delivers real, measurable results for small businesses.

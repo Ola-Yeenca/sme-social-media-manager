@@ -17,7 +17,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from ai_providers import AIProviderManager, ContentRequest, ContentType, ProviderStrategy
-from content.content_generator import ContentGenerator, ContentTheme, Language, ContentCategory
+from content.growth_content_generator import GrowthOptimizedContentGenerator, ContentTheme, Language, GrowthStrategy
 from social.twitter_manager import TwitterManager, Tweet
 from config.settings import settings, sme_context
 from notion import NotionManager, SocialMediaPost, PostStatus, Platform, PostType
@@ -51,7 +51,7 @@ class SocialMediaManager:
     def __init__(self):
         # Initialize components
         self.ai_manager = self._initialize_ai_manager()
-        self.content_generator = ContentGenerator()
+        self.content_generator = GrowthOptimizedContentGenerator()
         self.twitter_manager = self._initialize_twitter_manager()
 
         # Notion database manager
@@ -206,9 +206,116 @@ class SocialMediaManager:
                 hashtags=sme_context.HASHTAGS["primary"]
             )
             
-            # Generate content
+            # Use AI for dynamic content generation with viral optimization
+            growth_strategy = GrowthStrategy.VIRAL_POTENTIAL if i == 0 else GrowthStrategy.ENGAGEMENT_BOOST
+
+            # Get viral optimization insights from our growth generator
+            viral_insights = self.content_generator.generate_viral_optimized_content(
+                theme=theme,
+                growth_strategy=growth_strategy,
+                language=language
+            )
+
+            # Create diverse context for each post to force variety
+            import random
+
+            content_angles = [
+                "industry_insight", "case_study", "data_revelation", "contrarian_take",
+                "behind_scenes", "trend_analysis", "business_secret", "transformation_story",
+                "expert_tip", "myth_busting", "success_formula", "hidden_opportunity",
+                "market_trend", "customer_psychology", "operational_hack", "profit_discovery",
+                "efficiency_breakthrough", "competitive_advantage", "growth_strategy", "cost_optimization"
+            ]
+
+            restaurant_scenarios = [
+                # Classic/Traditional Names
+                {"name": "Bistro Verde", "challenge": "struggling with lunch rush efficiency", "insight": "peak hour demand patterns"},
+                {"name": "Café Luna", "challenge": "menu pricing confusion", "insight": "item profitability analysis"},
+                {"name": "Restaurant Bella Vista", "challenge": "seasonal revenue drops", "insight": "weather-based demand forecasting"},
+                {"name": "The Corner Deli", "challenge": "inventory waste", "insight": "predictive ordering patterns"},
+                {"name": "Local Tapas Bar", "challenge": "inconsistent weekend revenue", "insight": "customer ordering behavior"},
+
+                # Modern/Trendy Names
+                {"name": "Harvest Kitchen", "challenge": "staff scheduling inefficiencies", "insight": "labor cost optimization"},
+                {"name": "Urban Spoon", "challenge": "delivery timing issues", "insight": "order fulfillment patterns"},
+                {"name": "The Daily Grind", "challenge": "morning rush bottlenecks", "insight": "customer flow analytics"},
+                {"name": "Fusion Table", "challenge": "menu item performance", "insight": "dish popularity trends"},
+                {"name": "Artisan Eatery", "challenge": "customer retention", "insight": "loyalty program effectiveness"},
+
+                # Ethnic/International
+                {"name": "Sakura Sushi", "challenge": "ingredient cost fluctuations", "insight": "supplier price tracking"},
+                {"name": "Mama Rosa's", "challenge": "family dining patterns", "insight": "group ordering behavior"},
+                {"name": "El Corazón", "challenge": "happy hour optimization", "insight": "time-based pricing"},
+                {"name": "Bangkok Street", "challenge": "spice level preferences", "insight": "customer taste analytics"},
+                {"name": "Le Petit Café", "challenge": "breakfast vs lunch revenue", "insight": "daypart performance"},
+
+                # Casual/Fast-Casual
+                {"name": "Burger Junction", "challenge": "drive-thru wait times", "insight": "service speed metrics"},
+                {"name": "Pizza Corner", "challenge": "topping combinations", "insight": "customization analytics"},
+                {"name": "Sandwich Co.", "challenge": "lunch crowd management", "insight": "peak hour staffing"},
+                {"name": "Taco Libre", "challenge": "portion size optimization", "insight": "food cost analysis"},
+                {"name": "Noodle House", "challenge": "soup vs dry preferences", "insight": "seasonal demand shifts"},
+
+                # Upscale/Fine Dining
+                {"name": "The Golden Fork", "challenge": "wine pairing sales", "insight": "beverage upselling patterns"},
+                {"name": "Meridian Restaurant", "challenge": "reservation no-shows", "insight": "booking behavior analysis"},
+                {"name": "Chef's Table", "challenge": "tasting menu adoption", "insight": "premium offering performance"},
+                {"name": "The Copper Pot", "challenge": "special occasion dining", "insight": "event-driven revenue"},
+                {"name": "Starlight Bistro", "challenge": "dessert sales decline", "insight": "course completion rates"},
+
+                # Regional/Local Style
+                {"name": "Mountain View Grill", "challenge": "tourist vs local balance", "insight": "customer demographic analysis"},
+                {"name": "Riverside Café", "challenge": "weather-dependent sales", "insight": "outdoor seating optimization"},
+                {"name": "Downtown Diner", "challenge": "business lunch competition", "insight": "corporate catering opportunities"},
+                {"name": "Seaside Shack", "challenge": "seasonal staff planning", "insight": "workforce demand forecasting"},
+                {"name": "Prairie Kitchen", "challenge": "farm-to-table sourcing", "insight": "local supplier coordination"}
+            ]
+
+            data_insights = [
+                "87% of restaurants underutilize their POS data",
+                "Dynamic pricing can increase revenue 15% without losing customers",
+                "Peak hour optimization boosts margins by 10-25%",
+                "Menu psychology affects ordering by 30%",
+                "Real-time analytics reduce food waste by 20%",
+                "Restaurants lose 4-10% revenue to poor inventory management",
+                "Customer wait times over 8 minutes reduce return visits by 40%",
+                "Upselling at the right moment increases average check by 18%",
+                "Weather patterns predict restaurant sales with 85% accuracy",
+                "Staff scheduling optimization can cut labor costs by 12%",
+                "Table turnover improvements boost daily revenue by 25%",
+                "Digital menu boards increase impulse purchases by 35%",
+                "Loyalty programs drive 23% higher customer lifetime value",
+                "Kitchen efficiency gains reduce food costs by 8-15%",
+                "Price anchoring techniques influence 67% of ordering decisions",
+                "Delivery timing optimization improves customer satisfaction by 45%",
+                "Cross-selling strategies increase profit margins by 22%",
+                "Seasonal menu adjustments boost revenue by 19%",
+                "Customer feedback analysis prevents 60% of negative reviews",
+                "Smart portion sizing reduces waste while maintaining satisfaction"
+            ]
+
+            scenario = random.choice(restaurant_scenarios)
+            angle = random.choice(content_angles)
+            insight = random.choice(data_insights)
+
+            # Enhance the AI prompt with diverse, randomized context
+            enhanced_context = {
+                **content_request.context,
+                "content_angle": angle,
+                "restaurant_name": scenario["name"],
+                "business_challenge": scenario["challenge"],
+                "key_insight": scenario["insight"],
+                "surprising_statistic": insight,
+                "post_number": i + 1,  # Help AI understand this is post X of the day
+                "uniqueness_requirement": f"This is post #{i+1} today - make it completely different from previous posts"
+            }
+
+            # Update content request with enhanced context
+            content_request.context = enhanced_context
+
+            # Generate content using AI with viral optimization
             generated_content = await self.ai_manager.generate_content(
-                content_request, 
+                content_request,
                 provider_strategy
             )
             
@@ -392,8 +499,9 @@ class SocialMediaManager:
         
         # Test content generation
         try:
-            content = self.content_generator.generate_themed_content(
-                ContentTheme.DATA_MONDAY, 
+            content = self.content_generator.generate_viral_optimized_content(
+                ContentTheme.DATA_MONDAY,
+                GrowthStrategy.VIRAL_POTENTIAL,
                 Language.ENGLISH
             )
             results["content_generation"] = bool(content["text"])

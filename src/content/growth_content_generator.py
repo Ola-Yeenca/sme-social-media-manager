@@ -328,60 +328,130 @@ class GrowthOptimizedContentGenerator:
         }
     
     def _get_follower_acquisition_template(self, theme: ContentTheme, language: Language) -> str:
-        """Templates optimized for follower growth"""
+        """Templates optimized for follower growth with variety"""
         templates = {
             Language.ENGLISH: {
-                ContentTheme.DATA_MONDAY: "🚨 {viral_hook} 📊 SME Analytica's AI pricing helped restaurants boost margins by {percentage}% during peak hours. {social_proof} Ready to transform your business? {growth_trigger} {hashtags}",
-                ContentTheme.TECH_THURSDAY: "⚡ {tech_innovation} MenuFlow seamlessly integrates with your existing POS system - no vendor switching required! {social_proof} {growth_trigger} {hashtags}",
-                ContentTheme.CASE_WEDNESDAY: "🏆 CASE STUDY: {restaurant_name} was struggling with {business_challenge}. After implementing MenuFlow: ✅ {result_1} ✅ {result_2} ✅ {result_3} {social_proof} Want similar results? {growth_trigger} {hashtags}",
-                ContentTheme.FACT_FRIDAY: "💡 FACT: {surprising_statistic} Most restaurant owners don't realize this opportunity exists. {social_proof} Don't get left behind! {growth_trigger} {hashtags}"
+                ContentTheme.DATA_MONDAY: [
+                    "🚨 {viral_hook} 📊 SME Analytica's AI pricing helped restaurants boost margins by {percentage}% during peak hours. {social_proof} Ready to transform your business? {growth_trigger} {hashtags}",
+                    "📊 DATA ALERT: {surprising_statistic} {restaurant_name} discovered this and increased revenue by {percentage}%. Follow for more insights! {hashtags}",
+                    "💡 MONDAY INSIGHT: {specific_insight} This simple change helped {restaurant_name} achieve {transformation_result}. Follow for daily tips! {hashtags}"
+                ],
+                ContentTheme.TECH_THURSDAY: [
+                    "⚡ {tech_innovation} MenuFlow seamlessly integrates with your existing POS system - no vendor switching required! {social_proof} {growth_trigger} {hashtags}",
+                    "🚀 TECH BREAKTHROUGH: While others struggle with complex systems, MenuFlow works instantly. {restaurant_name} proved it: {transformation_result} Follow for tech updates! {hashtags}",
+                    "💻 GAME CHANGER: Forget expensive consultants. MenuFlow does what a $50K team would do, automatically. Follow for restaurant tech insights! {hashtags}"
+                ],
+                ContentTheme.CASE_WEDNESDAY: [
+                    "🏆 CASE STUDY: {restaurant_name} was struggling with {business_challenge}. After implementing MenuFlow: ✅ {result_1} ✅ {result_2} ✅ {result_3} {social_proof} Want similar results? {growth_trigger} {hashtags}",
+                    "💰 SUCCESS STORY: {restaurant_name} went from {business_challenge} to {transformation_result} in {timeframe}. Follow for more case studies! {hashtags}",
+                    "🎯 TRANSFORMATION: {restaurant_name} almost gave up. Then they discovered {specific_insight}. Result: {transformation_result} Follow for inspiring stories! {hashtags}"
+                ],
+                ContentTheme.FACT_FRIDAY: [
+                    "💡 FACT: {surprising_statistic} Most restaurant owners don't realize this opportunity exists. {social_proof} Don't get left behind! {growth_trigger} {hashtags}",
+                    "🤯 FRIDAY FACTS: {surprising_fact} {restaurant_name} was smart enough to act on this: {transformation_result} Follow for weekly facts! {hashtags}",
+                    "📊 SHOCKING: {surprising_statistic} Are you one of the smart ones? Follow for data-driven insights! {hashtags}"
+                ]
             },
             Language.SPANISH: {
                 ContentTheme.DATA_MONDAY: "🚨 {viral_hook} 📊 Los precios dinámicos de SME Analytica ayudaron a restaurantes a aumentar márgenes {percentage}% en horas pico. {social_proof} ¿Listo para transformar tu negocio? {growth_trigger} {hashtags}"
             }
         }
-        
+
         lang_templates = templates.get(language, templates[Language.ENGLISH])
-        return lang_templates.get(theme, lang_templates[ContentTheme.DATA_MONDAY])
+        theme_templates = lang_templates.get(theme, lang_templates[ContentTheme.DATA_MONDAY])
+        if isinstance(theme_templates, list):
+            return random.choice(theme_templates)
+        return theme_templates
     
     def _get_engagement_boost_template(self, theme: ContentTheme, language: Language) -> str:
-        """Templates optimized for engagement"""
+        """Templates optimized for engagement with variety"""
         templates = {
             Language.ENGLISH: {
-                ContentTheme.TALK_TUESDAY: "🤔 {question_starter} We've seen restaurants increase revenue by {percentage}% with simple analytics changes. What's YOUR biggest pricing challenge? Drop a comment below! 👇 {social_proof} {hashtags}",
-                ContentTheme.DATA_MONDAY: "📊 MONDAY POLL: What matters most for your restaurant? A) Higher margins B) Faster service C) Better analytics D) All of the above Comment your choice + why! {social_proof} {hashtags}",
-                ContentTheme.FACT_FRIDAY: "💡 Fun fact: {surprising_fact} What's the most surprising data insight you've discovered about your business? Share below! 👇 {hashtags}"
+                ContentTheme.TALK_TUESDAY: [
+                    "🤔 {question_starter} We've seen restaurants increase revenue by {percentage}% with simple analytics changes. What's YOUR biggest pricing challenge? Drop a comment below! 👇 {social_proof} {hashtags}",
+                    "💬 TALK TUESDAY: Restaurant owners, let's chat! What's the ONE thing you wish you knew about your customers? We'll share insights from our data! 👇 {hashtags}",
+                    "🗣️ Question for restaurant owners: If you could get ONE piece of data about your business, what would it be? Comment below! {hashtags}",
+                    "💭 REAL TALK: What's your biggest struggle with pricing? Too high and customers leave, too low and profits suffer. How do you find the sweet spot? 👇 {hashtags}"
+                ],
+                ContentTheme.DATA_MONDAY: [
+                    "📊 MONDAY POLL: What matters most for your restaurant? A) Higher margins B) Faster service C) Better analytics D) All of the above Comment your choice + why! {social_proof} {hashtags}",
+                    "📈 DATA MONDAY: Quick poll! What percentage of your menu items do you think are actually profitable? A) 25% B) 50% C) 75% D) No idea 😅 Comment your guess! {hashtags}",
+                    "📊 Monday question: What's your restaurant's biggest data mystery? Sales patterns? Customer preferences? Profit margins? Tell us below! 👇 {hashtags}"
+                ],
+                ContentTheme.FACT_FRIDAY: [
+                    "💡 Fun fact: {surprising_fact} What's the most surprising data insight you've discovered about your business? Share below! 👇 {hashtags}",
+                    "🤯 FRIDAY MIND-BLOW: {surprising_statistic} Did this surprise you? What other restaurant facts blow your mind? Share them! 👇 {hashtags}",
+                    "💡 FACT FRIDAY: {surprising_fact} Restaurant owners - what's the weirdest pattern you've noticed in your sales data? 👇 {hashtags}"
+                ]
             }
         }
-        
+
         lang_templates = templates.get(language, templates[Language.ENGLISH])
-        return lang_templates.get(theme, lang_templates[ContentTheme.TALK_TUESDAY])
+        theme_templates = lang_templates.get(theme, lang_templates[ContentTheme.TALK_TUESDAY])
+        return random.choice(theme_templates)
     
     def _get_viral_potential_template(self, theme: ContentTheme, language: Language) -> str:
-        """Templates optimized for viral spread"""
+        """Templates optimized for viral spread with REAL variety"""
         templates = {
             Language.ENGLISH: {
-                ContentTheme.DATA_MONDAY: "🔥 VIRAL THREAD 1/5: The {amount} secret that transformed a struggling café into the neighborhood's busiest spot... MenuFlow's AI pricing identified their profit leak: {specific_insight}. Result? {transformation_result} 🧵👇",
-                ContentTheme.TECH_THURSDAY: "⚡ BREAKING: Restaurant tech that actually WORKS. Unlike complex systems that need IT teams, MenuFlow plugs into your existing POS and starts optimizing immediately. {social_proof} Retweet if you're tired of complicated restaurant tech! {hashtags}",
-                ContentTheme.CASE_WEDNESDAY: "🚨 This will shock you: {restaurant_name} thought they needed to RAISE prices to increase profit. MenuFlow's AI found they could make MORE money by lowering some prices and raising others. Result: {percentage}% revenue boost! {hashtags}"
+                ContentTheme.DATA_MONDAY: [
+                    "🔥 VIRAL THREAD 1/5: The {amount} secret that transformed a struggling café into the neighborhood's busiest spot... MenuFlow's AI pricing identified their profit leak: {specific_insight}. Result? {transformation_result} 🧵👇",
+                    "📊 DATA BOMB: {percentage}% of restaurants are doing pricing WRONG. Here's what {restaurant_name} discovered when they let AI analyze their sales data... {transformation_result} {hashtags}",
+                    "💡 MIND = BLOWN: This restaurant owner thought they knew their customers. Then MenuFlow's AI showed them {specific_insight}. Revenue jumped {percentage}% in {timeframe}. {hashtags}",
+                    "🚨 RESTAURANT OWNERS: Stop guessing your prices! {restaurant_name} used data-driven pricing and saw {transformation_result}. The secret? {specific_insight} {hashtags}"
+                ],
+                ContentTheme.TECH_THURSDAY: [
+                    "⚡ BREAKING: Restaurant tech that actually WORKS. Unlike complex systems that need IT teams, MenuFlow plugs into your existing POS and starts optimizing immediately. {social_proof} Retweet if you're tired of complicated restaurant tech! {hashtags}",
+                    "🚀 TECH THURSDAY: While competitors struggle with clunky systems, {restaurant_name} integrated MenuFlow in 5 minutes. Result: {transformation_result} No IT team needed. {hashtags}",
+                    "💻 GAME CHANGER: Forget expensive consultants. MenuFlow's AI does what a $50K analytics team would do, but automatically. {restaurant_name} proved it: {transformation_result} {hashtags}",
+                    "⚡ PLOT TWIST: The best restaurant tech isn't complicated. {restaurant_name} installed MenuFlow during lunch rush and it started optimizing immediately. {transformation_result} {hashtags}"
+                ],
+                ContentTheme.CASE_WEDNESDAY: [
+                    "🚨 This will shock you: {restaurant_name} thought they needed to RAISE prices to increase profit. MenuFlow's AI found they could make MORE money by lowering some prices and raising others. Result: {percentage}% revenue boost! {hashtags}",
+                    "🏆 CASE STUDY: {restaurant_name} was bleeding money during {timeframe}. The problem? {business_challenge}. MenuFlow's solution: {specific_insight}. Outcome: {transformation_result} {hashtags}",
+                    "💰 PLOT TWIST: {restaurant_name} almost closed down. Then they discovered their POS data was hiding {specific_insight}. MenuFlow helped them turn it around: {transformation_result} {hashtags}",
+                    "🎯 SUCCESS STORY: Everyone told {restaurant_name} to cut costs. Instead, they used MenuFlow to optimize pricing. The result? {transformation_result} Sometimes the opposite approach works! {hashtags}",
+                    "🔥 TRANSFORMATION: {restaurant_name} went from struggling to thriving in {timeframe}. The secret weapon? AI that found {specific_insight}. Revenue impact: {transformation_result} {hashtags}",
+                    "📈 BREAKTHROUGH: {restaurant_name} tried everything - new menu, marketing, staff training. Nothing worked. Then MenuFlow revealed {specific_insight}. Game changer: {transformation_result} {hashtags}"
+                ],
+                ContentTheme.FACT_FRIDAY: [
+                    "💡 FACT: {surprising_statistic} Most restaurant owners don't realize this opportunity exists. {social_proof} Don't get left behind! {hashtags}",
+                    "🤯 FRIDAY FACTS: {surprising_fact} {restaurant_name} discovered this and achieved {transformation_result}. Are you missing out? {hashtags}",
+                    "📊 SHOCKING STAT: {surprising_statistic} {restaurant_name} was one of the smart ones who acted on this insight: {transformation_result} {hashtags}",
+                    "💡 DID YOU KNOW: {surprising_fact} That's exactly what helped {restaurant_name} achieve {transformation_result} in just {timeframe}. {hashtags}"
+                ]
             }
         }
-        
+
         lang_templates = templates.get(language, templates[Language.ENGLISH])
-        return lang_templates.get(theme, lang_templates[ContentTheme.DATA_MONDAY])
+        theme_templates = lang_templates.get(theme, lang_templates[ContentTheme.DATA_MONDAY])
+        return random.choice(theme_templates)  # Randomly select from multiple templates
     
     def _get_conversion_focused_template(self, theme: ContentTheme, language: Language) -> str:
-        """Templates optimized for conversions"""
+        """Templates optimized for conversions with variety"""
         templates = {
             Language.ENGLISH: {
-                ContentTheme.DATA_MONDAY: "📊 {proven_result} {social_proof} Ready to see what MenuFlow can do for YOUR restaurant? Book a free 15-minute demo: [link] {urgency_creator} {hashtags}",
-                ContentTheme.TECH_THURSDAY: "⚡ See MenuFlow in action: {demo_description} Watch how it integrates with your POS system and starts optimizing prices in real-time. Free demo available: [link] {hashtags}",
-                ContentTheme.CASE_WEDNESDAY: "🏆 Want results like {restaurant_name}? They saw {specific_results} in just {timeframe}. Your restaurant could be next. Schedule your free consultation: [link] {hashtags}"
+                ContentTheme.DATA_MONDAY: [
+                    "📊 {proven_result} {social_proof} Ready to see what MenuFlow can do for YOUR restaurant? Book a free 15-minute demo: [link] {urgency_creator} {hashtags}",
+                    "💡 The data doesn't lie: {surprising_statistic} Want to join the smart restaurant owners? Start your free MenuFlow trial: [link] {hashtags}",
+                    "📈 {restaurant_name} increased revenue by {percentage}% using data-driven pricing. Your turn! Free demo: [link] {hashtags}"
+                ],
+                ContentTheme.TECH_THURSDAY: [
+                    "⚡ See MenuFlow in action: {demo_description} Watch how it integrates with your POS system and starts optimizing prices in real-time. Free demo available: [link] {hashtags}",
+                    "🚀 Tired of complicated restaurant tech? MenuFlow works differently - plug & play simplicity. See for yourself: [link] {hashtags}",
+                    "💻 While others struggle with complex systems, you could be optimizing prices automatically. Try MenuFlow free: [link] {hashtags}"
+                ],
+                ContentTheme.CASE_WEDNESDAY: [
+                    "🏆 Want results like {restaurant_name}? They saw {specific_results} in just {timeframe}. Your restaurant could be next. Schedule your free consultation: [link] {hashtags}",
+                    "💰 {restaurant_name} went from struggling to {transformation_result}. Ready for your transformation? Free demo: [link] {hashtags}",
+                    "🎯 Success story: {restaurant_name} achieved {transformation_result} with MenuFlow. Book your demo: [link] {hashtags}"
+                ]
             }
         }
-        
+
         lang_templates = templates.get(language, templates[Language.ENGLISH])
-        return lang_templates.get(theme, lang_templates[ContentTheme.DATA_MONDAY])
+        theme_templates = lang_templates.get(theme, lang_templates[ContentTheme.DATA_MONDAY])
+        return random.choice(theme_templates)
     
     def _generate_growth_variables(self, theme: ContentTheme, growth_strategy: GrowthStrategy, 
                                  language: Language) -> Dict[str, str]:
