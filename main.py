@@ -114,13 +114,16 @@ async def run_enhanced_automation() -> Dict[str, Any]:
     }
     
     try:
-        # 1. Generate viral-optimized content
-        logger.info("📝 Generating viral-optimized content...")
+        # 1. Generate AI-powered viral content using our enhanced system
+        logger.info("📝 Generating AI-powered viral content...")
         try:
-            from src.content.growth_content_generator import GrowthOptimizedContentGenerator, GrowthStrategy
-            from config.settings import ContentTheme, Language
-            
-            generator = GrowthOptimizedContentGenerator()
+            from src.social_media_manager import SocialMediaManager
+            from ai_providers import ContentRequest, ContentType
+            from config.settings import sme_context, Language, ContentTheme
+            import random
+
+            # Initialize the enhanced social media manager
+            manager = SocialMediaManager()
 
             # Generate content for today's theme (dynamic based on day)
             weekday = datetime.now().weekday()  # 0=Monday, 6=Sunday
@@ -134,11 +137,64 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 6: ContentTheme.WEEKEND_INSIGHTS
             }
             today_theme = theme_map.get(weekday, ContentTheme.DATA_MONDAY)
-            content = generator.generate_viral_optimized_content(
-                theme=today_theme,
-                growth_strategy=GrowthStrategy.VIRAL_POTENTIAL,
-                language=Language.ENGLISH
+
+            # Create diverse context for AI generation (same as in social_media_manager.py)
+            content_angles = [
+                "industry_insight", "case_study", "data_revelation", "contrarian_take",
+                "behind_scenes", "trend_analysis", "business_secret", "transformation_story",
+                "expert_tip", "myth_busting", "success_formula", "hidden_opportunity"
+            ]
+
+            restaurant_scenarios = [
+                {"name": "Harvest Kitchen", "challenge": "staff scheduling inefficiencies", "insight": "labor cost optimization"},
+                {"name": "Urban Spoon", "challenge": "delivery timing issues", "insight": "order fulfillment patterns"},
+                {"name": "Sakura Sushi", "challenge": "ingredient cost fluctuations", "insight": "supplier price tracking"},
+                {"name": "The Golden Fork", "challenge": "wine pairing sales", "insight": "beverage upselling patterns"},
+                {"name": "Bangkok Street", "challenge": "spice level preferences", "insight": "customer taste analytics"}
+            ]
+
+            data_insights = [
+                "Weather patterns predict restaurant sales with 85% accuracy",
+                "Staff scheduling optimization can cut labor costs by 12%",
+                "Digital menu boards increase impulse purchases by 35%",
+                "Customer wait times over 8 minutes reduce return visits by 40%",
+                "Cross-selling strategies increase profit margins by 22%"
+            ]
+
+            scenario = random.choice(restaurant_scenarios)
+            angle = random.choice(content_angles)
+            insight = random.choice(data_insights)
+
+            # Create content request for AI generation
+            content_request = ContentRequest(
+                content_type=ContentType.TWEET,
+                language='en',
+                theme=today_theme.value,
+                context={
+                    'target_audience': 'restaurant owners',
+                    'focus': 'practical business value',
+                    'tone': 'expert but conversational',
+                    'content_angle': angle,
+                    'restaurant_name': scenario['name'],
+                    'business_challenge': scenario['challenge'],
+                    'key_insight': scenario['insight'],
+                    'surprising_statistic': insight,
+                    'uniqueness_requirement': 'Create unique, viral-worthy content for GitHub automation'
+                },
+                hashtags=sme_context.HASHTAGS['primary']
             )
+
+            # Generate content using AI
+            generated_content = await manager.ai_manager.generate_content(content_request)
+
+            # Convert to expected format for compatibility
+            content = {
+                "text": generated_content.text,
+                "hashtags": generated_content.hashtags,
+                "predicted_metrics": type('obj', (object,), {
+                    'virality_score': generated_content.confidence_score * 10
+                })()
+            }
             
             results["content_generated"] = 1
             results["systems_active"].append("viral_content_generator")
@@ -330,32 +386,73 @@ async def run_content_only() -> Dict[str, Any]:
     logger.info("📝 Generating content only...")
     
     try:
-        # Try enhanced content generator first
+        # Use AI-powered content generation
         try:
-            from src.content.growth_content_generator import GrowthOptimizedContentGenerator, GrowthStrategy
-            from config.settings import ContentTheme, Language
-            
-            generator = GrowthOptimizedContentGenerator()
-            content = generator.generate_viral_optimized_content(
-                theme=ContentTheme.DATA_MONDAY,
-                growth_strategy=GrowthStrategy.FOLLOWER_ACQUISITION
+            from src.social_media_manager import SocialMediaManager
+            from ai_providers import ContentRequest, ContentType
+            from config.settings import sme_context, Language, ContentTheme
+            import random
+
+            # Initialize the enhanced social media manager
+            manager = SocialMediaManager()
+
+            # Create diverse context for AI generation
+            content_angles = ["industry_insight", "case_study", "data_revelation", "expert_tip"]
+            restaurant_scenarios = [
+                {"name": "Harvest Kitchen", "challenge": "staff scheduling", "insight": "labor optimization"},
+                {"name": "Urban Spoon", "challenge": "delivery timing", "insight": "order patterns"},
+                {"name": "Sakura Sushi", "challenge": "cost fluctuations", "insight": "supplier tracking"}
+            ]
+            data_insights = [
+                "Staff scheduling optimization can cut labor costs by 12%",
+                "Digital menu boards increase impulse purchases by 35%",
+                "Weather patterns predict restaurant sales with 85% accuracy"
+            ]
+
+            scenario = random.choice(restaurant_scenarios)
+            angle = random.choice(content_angles)
+            insight = random.choice(data_insights)
+
+            # Create content request for AI generation
+            content_request = ContentRequest(
+                content_type=ContentType.TWEET,
+                language='en',
+                theme='data_monday',
+                context={
+                    'target_audience': 'restaurant owners',
+                    'focus': 'practical business value',
+                    'tone': 'expert but conversational',
+                    'content_angle': angle,
+                    'restaurant_name': scenario['name'],
+                    'business_challenge': scenario['challenge'],
+                    'key_insight': scenario['insight'],
+                    'surprising_statistic': insight,
+                    'uniqueness_requirement': 'Create unique content for content-only mode'
+                },
+                hashtags=sme_context.HASHTAGS['primary']
             )
-            
+
+            # Generate content using AI
+            generated_content = await manager.ai_manager.generate_content(content_request)
+
             return {
-                "mode": "enhanced_content",
+                "mode": "ai_powered_content",
                 "content_generated": 1,
-                "viral_score": content["predicted_metrics"].virality_score,
-                "hashtags": content["hashtags"]
+                "text": generated_content.text,
+                "viral_score": generated_content.confidence_score * 10,
+                "hashtags": generated_content.hashtags,
+                "provider": generated_content.metadata.get("provider", "Unknown")
             }
-            
-        except Exception:
+
+        except Exception as e:
+            logger.warning(f"AI content generation failed, using fallback: {e}")
             # Fallback to basic generator
             from src.content.content_generator import ContentGenerator
             from config.settings import ContentTheme
-            
+
             generator = ContentGenerator()
             content = generator.generate_themed_content(ContentTheme.DATA_MONDAY)
-            
+
             return {
                 "mode": "basic_content",
                 "content_generated": 1,
