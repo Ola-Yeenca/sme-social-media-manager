@@ -60,9 +60,9 @@ class Settings:
         self.secondary_language = Language.SPANISH
         self.timezone = os.getenv("TIMEZONE", "UTC")
         
-        # Notion Configuration
-        self.notion_api_key = os.getenv("NOTION_API_KEY", "your_notion_api_key_here")
-        self.social_media_db_id = os.getenv("SOCIAL_MEDIA_DB_ID", "20f7ad8571fa80ea9fe3fa6ba3f484c7")
+        # Notion Configuration (support both naming conventions)
+        self.notion_api_key = os.getenv("NOTION_API_KEY") or os.getenv("NOTION_TOKEN", "your_notion_api_key_here")
+        self.social_media_db_id = os.getenv("SOCIAL_MEDIA_DB_ID") or os.getenv("NOTION_DATABASE_ID", "20f7ad8571fa80ea9fe3fa6ba3f484c7")
         self.local_businesses_db_id = os.getenv("LOCAL_BUSINESSES_DB_ID", "1cd7ad8571fa8040ba03e63fcd20872a")
 
         # Database (keeping for backward compatibility)
