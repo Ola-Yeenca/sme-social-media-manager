@@ -220,78 +220,100 @@ class SocialMediaManager:
             import random
 
             content_angles = [
-                "industry_insight", "case_study", "data_revelation", "contrarian_take",
-                "behind_scenes", "trend_analysis", "business_secret", "transformation_story",
-                "expert_tip", "myth_busting", "success_formula", "hidden_opportunity",
-                "market_trend", "customer_psychology", "operational_hack", "profit_discovery",
-                "efficiency_breakthrough", "competitive_advantage", "growth_strategy", "cost_optimization"
+                # MenuFlow Feature Stories
+                "collaborative_ordering_breakthrough", "qr_code_revolution", "ai_recommendation_success",
+                "multilingual_expansion", "kitchen_integration_win", "bill_splitting_magic",
+                "real_time_sync_power", "zero_wait_achievement", "order_accuracy_perfection",
+                "table_turnover_optimization", "staff_efficiency_boost", "customer_satisfaction_surge",
+
+                # Business Transformation Angles
+                "digital_transformation", "operational_excellence", "revenue_optimization",
+                "customer_experience_revolution", "technology_integration", "competitive_advantage",
+                "scalability_success", "efficiency_breakthrough", "profit_maximization",
+
+                # Industry Insights
+                "restaurant_tech_evolution", "future_of_dining", "pos_integration_mastery",
+                "analytics_driven_decisions", "predictive_intelligence", "automation_benefits",
+                "mobile_first_strategy", "contactless_dining_trend", "data_driven_growth",
+
+                # Problem-Solution Stories
+                "chaos_to_order", "confusion_to_clarity", "manual_to_automated",
+                "slow_to_instant", "error_prone_to_perfect", "complex_to_simple"
             ]
 
             restaurant_scenarios = [
-                # Classic/Traditional Names
-                {"name": "Bistro Verde", "challenge": "struggling with lunch rush efficiency", "insight": "peak hour demand patterns"},
-                {"name": "Café Luna", "challenge": "menu pricing confusion", "insight": "item profitability analysis"},
-                {"name": "Restaurant Bella Vista", "challenge": "seasonal revenue drops", "insight": "weather-based demand forecasting"},
-                {"name": "The Corner Deli", "challenge": "inventory waste", "insight": "predictive ordering patterns"},
-                {"name": "Local Tapas Bar", "challenge": "inconsistent weekend revenue", "insight": "customer ordering behavior"},
+                # MenuFlow Success Stories with Real Features
+                {"name": "Bistro Verde", "challenge": "40% slower table turnover during lunch rush", "insight": "MenuFlow's collaborative ordering cut wait times", "result": "40% faster table turnover", "feature": "QR code instant ordering"},
+                {"name": "Café Luna", "challenge": "customers confused by multilingual menu", "insight": "automatic language detection and translation", "result": "90% customer satisfaction boost", "feature": "real-time menu translation"},
+                {"name": "Restaurant Bella Vista", "challenge": "25% revenue loss from order errors", "insight": "digital ordering eliminated miscommunication", "result": "60% reduction in order errors", "feature": "collaborative cart system"},
+                {"name": "The Corner Deli", "challenge": "staff overwhelmed taking group orders", "insight": "customers self-order via shared cart", "result": "staff efficiency increased 3x", "feature": "real-time group ordering"},
+                {"name": "Local Tapas Bar", "challenge": "losing customers who couldn't split bills", "insight": "automatic bill splitting by person", "result": "25% increase in group dining", "feature": "smart bill splitting"},
 
-                # Modern/Trendy Names
-                {"name": "Harvest Kitchen", "challenge": "staff scheduling inefficiencies", "insight": "labor cost optimization"},
-                {"name": "Urban Spoon", "challenge": "delivery timing issues", "insight": "order fulfillment patterns"},
-                {"name": "The Daily Grind", "challenge": "morning rush bottlenecks", "insight": "customer flow analytics"},
-                {"name": "Fusion Table", "challenge": "menu item performance", "insight": "dish popularity trends"},
-                {"name": "Artisan Eatery", "challenge": "customer retention", "insight": "loyalty program effectiveness"},
+                # AI-Powered Optimization Stories
+                {"name": "Harvest Kitchen", "challenge": "unpredictable daily revenue swings", "insight": "AI recommendations boosted average orders", "result": "25% increase in average order value", "feature": "AI-powered menu recommendations"},
+                {"name": "Urban Spoon", "challenge": "popular items running out early", "insight": "demand prediction and inventory alerts", "result": "eliminated stockouts completely", "feature": "inventory prediction system"},
+                {"name": "The Daily Grind", "challenge": "morning rush creating 15-min waits", "insight": "pre-ordering and table status tracking", "result": "zero wait time for menu access", "feature": "instant QR code access"},
+                {"name": "Fusion Table", "challenge": "couldn't identify profitable menu items", "insight": "real-time analytics on dish performance", "result": "identified top 20% profit drivers", "feature": "performance analytics dashboard"},
+                {"name": "Artisan Eatery", "challenge": "customers leaving due to language barriers", "insight": "browser language auto-detection", "result": "expanded to 5 language markets", "feature": "multilingual accessibility"},
 
-                # Ethnic/International
-                {"name": "Sakura Sushi", "challenge": "ingredient cost fluctuations", "insight": "supplier price tracking"},
-                {"name": "Mama Rosa's", "challenge": "family dining patterns", "insight": "group ordering behavior"},
-                {"name": "El Corazón", "challenge": "happy hour optimization", "insight": "time-based pricing"},
-                {"name": "Bangkok Street", "challenge": "spice level preferences", "insight": "customer taste analytics"},
-                {"name": "Le Petit Café", "challenge": "breakfast vs lunch revenue", "insight": "daypart performance"},
+                # Operational Excellence Stories
+                {"name": "Sakura Sushi", "challenge": "kitchen overwhelmed with complex orders", "insight": "digital orders flow directly to kitchen displays", "result": "streamlined kitchen operations", "feature": "kitchen integration system"},
+                {"name": "Mama Rosa's", "challenge": "large families struggled to coordinate orders", "insight": "real-time collaborative ordering for groups", "result": "became family dining destination", "feature": "seamless group ordering"},
+                {"name": "El Corazón", "challenge": "happy hour pricing changes caused confusion", "insight": "dynamic pricing updates in real-time", "result": "optimized happy hour revenue", "feature": "dynamic pricing engine"},
+                {"name": "Bangkok Street", "challenge": "customers couldn't communicate spice preferences", "insight": "detailed customization options in app", "result": "perfect spice levels every time", "feature": "customization interface"},
+                {"name": "Le Petit Café", "challenge": "breakfast crowd left due to slow service", "insight": "sub-second menu loading and ordering", "result": "captured morning rush market", "feature": "instant menu loading"},
 
-                # Casual/Fast-Casual
-                {"name": "Burger Junction", "challenge": "drive-thru wait times", "insight": "service speed metrics"},
-                {"name": "Pizza Corner", "challenge": "topping combinations", "insight": "customization analytics"},
-                {"name": "Sandwich Co.", "challenge": "lunch crowd management", "insight": "peak hour staffing"},
-                {"name": "Taco Libre", "challenge": "portion size optimization", "insight": "food cost analysis"},
-                {"name": "Noodle House", "challenge": "soup vs dry preferences", "insight": "seasonal demand shifts"},
+                # Technology Integration Success
+                {"name": "Burger Junction", "challenge": "POS system couldn't handle digital orders", "insight": "seamless integration with existing POS", "result": "unified order management", "feature": "POS system integration"},
+                {"name": "Pizza Corner", "challenge": "complex topping orders led to mistakes", "insight": "visual order confirmation system", "result": "100% order accuracy", "feature": "order verification system"},
+                {"name": "Sandwich Co.", "challenge": "peak lunch hour chaos", "insight": "real-time order status tracking", "result": "organized lunch service", "feature": "order tracking system"},
+                {"name": "Taco Libre", "challenge": "couldn't track customer preferences", "insight": "AI learning from order patterns", "result": "personalized recommendations", "feature": "AI recommendation engine"},
+                {"name": "Noodle House", "challenge": "seasonal menu changes were manual nightmare", "insight": "one-click menu updates across all tables", "result": "instant seasonal transitions", "feature": "real-time menu management"},
 
-                # Upscale/Fine Dining
-                {"name": "The Golden Fork", "challenge": "wine pairing sales", "insight": "beverage upselling patterns"},
-                {"name": "Meridian Restaurant", "challenge": "reservation no-shows", "insight": "booking behavior analysis"},
-                {"name": "Chef's Table", "challenge": "tasting menu adoption", "insight": "premium offering performance"},
-                {"name": "The Copper Pot", "challenge": "special occasion dining", "insight": "event-driven revenue"},
-                {"name": "Starlight Bistro", "challenge": "dessert sales decline", "insight": "course completion rates"},
-
-                # Regional/Local Style
-                {"name": "Mountain View Grill", "challenge": "tourist vs local balance", "insight": "customer demographic analysis"},
-                {"name": "Riverside Café", "challenge": "weather-dependent sales", "insight": "outdoor seating optimization"},
-                {"name": "Downtown Diner", "challenge": "business lunch competition", "insight": "corporate catering opportunities"},
-                {"name": "Seaside Shack", "challenge": "seasonal staff planning", "insight": "workforce demand forecasting"},
-                {"name": "Prairie Kitchen", "challenge": "farm-to-table sourcing", "insight": "local supplier coordination"}
+                # Enterprise Analytics Success
+                {"name": "The Golden Fork", "challenge": "no visibility into customer behavior", "insight": "comprehensive analytics dashboard", "result": "data-driven menu optimization", "feature": "business intelligence suite"},
+                {"name": "Meridian Restaurant", "challenge": "couldn't predict busy periods", "insight": "traffic heatmap and pattern analysis", "result": "perfect staff scheduling", "feature": "predictive analytics"},
+                {"name": "Chef's Table", "challenge": "premium items weren't selling", "insight": "AI-suggested upselling at optimal moments", "result": "doubled premium item sales", "feature": "intelligent upselling"},
+                {"name": "The Copper Pot", "challenge": "lost revenue from no-shows", "insight": "reservation integration with ordering system", "result": "reduced no-shows by 30%", "feature": "reservation management"},
+                {"name": "Starlight Bistro", "challenge": "customers skipping dessert", "insight": "strategic dessert recommendations during meal", "result": "dessert sales up 40%", "feature": "contextual recommendations"}
             ]
 
             data_insights = [
-                "87% of restaurants underutilize their POS data",
-                "Dynamic pricing can increase revenue 15% without losing customers",
-                "Peak hour optimization boosts margins by 10-25%",
-                "Menu psychology affects ordering by 30%",
-                "Real-time analytics reduce food waste by 20%",
-                "Restaurants lose 4-10% revenue to poor inventory management",
-                "Customer wait times over 8 minutes reduce return visits by 40%",
-                "Upselling at the right moment increases average check by 18%",
-                "Weather patterns predict restaurant sales with 85% accuracy",
-                "Staff scheduling optimization can cut labor costs by 12%",
-                "Table turnover improvements boost daily revenue by 25%",
-                "Digital menu boards increase impulse purchases by 35%",
-                "Loyalty programs drive 23% higher customer lifetime value",
-                "Kitchen efficiency gains reduce food costs by 8-15%",
-                "Price anchoring techniques influence 67% of ordering decisions",
-                "Delivery timing optimization improves customer satisfaction by 45%",
-                "Cross-selling strategies increase profit margins by 22%",
-                "Seasonal menu adjustments boost revenue by 19%",
-                "Customer feedback analysis prevents 60% of negative reviews",
-                "Smart portion sizing reduces waste while maintaining satisfaction"
+                # MenuFlow Proven Results
+                "MenuFlow delivers 40% faster table turnover through streamlined digital ordering",
+                "AI recommendations increase average order value by 25% automatically",
+                "Digital ordering reduces order errors by 60% compared to traditional methods",
+                "Collaborative ordering enables seamless group dining for 4+ people",
+                "Sub-second menu loading eliminates customer wait times completely",
+                "Real-time synchronization keeps all devices updated instantly",
+                "Automatic bill splitting increases group dining revenue by 25%",
+                "99.9% uptime ensures ordering system never fails during service",
+                "Zero app downloads required - works instantly via QR code scanning",
+                "Multilingual menus expand customer base to international diners",
+
+                # Restaurant Operations Insights
+                "QR code ordering eliminates need for servers to take orders manually",
+                "Kitchen integration displays orders directly on kitchen screens",
+                "Real-time inventory tracking prevents stockouts during peak hours",
+                "Dynamic pricing adjusts automatically based on demand patterns",
+                "Staff efficiency increases 3x when customers self-order digitally",
+                "Order accuracy reaches 100% with digital confirmation systems",
+                "Peak hour chaos disappears with organized digital order queues",
+                "Table status tracking optimizes seating and turnover rates",
+                "Predictive analytics enable perfect staff scheduling decisions",
+                "One-click menu updates instantly change pricing across all tables",
+
+                # Customer Experience Metrics
+                "90% customer satisfaction achieved with digital ordering experience",
+                "Group ordering coordination hassles eliminated completely",
+                "Language barriers removed with automatic translation features",
+                "Order tracking provides real-time status updates to customers",
+                "Special dietary requests handled perfectly through digital customization",
+                "Payment processing becomes seamless with integrated systems",
+                "Customer feedback collection improves service quality continuously",
+                "Personalized recommendations learn from individual preferences",
+                "Mobile-first design works perfectly on any smartphone",
+                "Accessibility features serve customers with diverse needs"
             ]
 
             scenario = random.choice(restaurant_scenarios)
