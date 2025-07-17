@@ -133,7 +133,7 @@ jobs:
             ;;
           "engagement")
             echo "Running engagement automation..."
-            python3 main.py --mode=basic --quiet
+            python3 main.py --mode=engagement --quiet
             ;;
           "post_now")
             echo "Posting scheduled content now..."

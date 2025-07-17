@@ -353,7 +353,7 @@ class TwitterManager:
         opportunities = []
         
         for term in search_terms:
-            tweets = await self.search_tweets(term, max_results=5)
+            tweets = await self.search_tweets(term, max_results=10)
             
             for tweet in tweets:
                 # Calculate engagement score

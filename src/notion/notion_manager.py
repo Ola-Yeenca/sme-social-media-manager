@@ -274,6 +274,136 @@ class NotionManager:
         except Exception as e:
             self.logger.error(f"Error marking post as published: {e}")
             return False
+
+    def save_engagement_analytics(self, engagement_data: Dict[str, Any]) -> bool:
+        """Save engagement analytics data to Notion database"""
+
+        try:
+            # Create a new page in the social media database for engagement analytics
+            properties = {
+                "Name": {
+                    "title": [
+                        {
+                            "text": {
+                                "content": f"Engagement Analytics - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+                            }
+                        }
+                    ]
+                },
+                "Content": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": f"Engagement Summary:\n"
+                                          f"• Actions Taken: {engagement_data.get('actions_taken', 0)}\n"
+                                          f"• Opportunities Found: {engagement_data.get('opportunities_found', 0)}\n"
+                                          f"• Platforms: {', '.join(engagement_data.get('platforms_engaged', []))}\n"
+                                          f"• Breakdown: {engagement_data.get('engagement_breakdown', {})}"
+                            }
+                        }
+                    ]
+                },
+                "Status": {
+                    "select": {
+                        "name": "Published"
+                    }
+                },
+                "Platform": {
+                    "select": {
+                        "name": "Analytics"
+                    }
+                },
+                "Post Type": {
+                    "select": {
+                        "name": "Engagement"
+                    }
+                },
+                "Published Time": {
+                    "date": {
+                        "start": datetime.now().isoformat()
+                    }
+                },
+                "Engagement Metrics": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": f"Engagement Analytics: {engagement_data.get('actions_taken', 0)} actions, "
+                                          f"{engagement_data.get('opportunities_found', 0)} opportunities"
+                            }
+                        }
+                    ]
+                }
+            }
+
+            response = self.client.pages.create(
+                parent={"database_id": self.social_media_db_id},
+                properties=properties
+            )
+
+            analytics_id = response.get('id')
+            self.logger.info(f"Saved engagement analytics to Notion: {analytics_id}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error saving engagement analytics to Notion: {e}")
+            return False
+
+    def get_engagement_analytics(self, days: int = 7) -> Dict[str, Any]:
+        """Get engagement analytics from the last N days"""
+
+        try:
+            # Calculate date range
+            from datetime import timedelta
+            start_date = datetime.now() - timedelta(days=days)
+
+            response = self.client.databases.query(
+                database_id=self.social_media_db_id,
+                filter={
+                    "and": [
+                        {
+                            "property": "Post Type",
+                            "select": {
+                                "equals": "Engagement"
+                            }
+                        },
+                        {
+                            "property": "Published Time",
+                            "date": {
+                                "after": start_date.isoformat()
+                            }
+                        }
+                    ]
+                },
+                sorts=[
+                    {
+                        "property": "Published Time",
+                        "direction": "descending"
+                    }
+                ]
+            )
+
+            analytics_summary = {
+                "total_engagement_sessions": len(response.get('results', [])),
+                "date_range": f"{start_date.strftime('%Y-%m-%d')} to {datetime.now().strftime('%Y-%m-%d')}",
+                "sessions": []
+            }
+
+            for page in response.get('results', []):
+                # Extract engagement data from the page
+                content = self._extract_text_from_rich_text(page.get('properties', {}).get('Content', {}).get('rich_text', []))
+                published_time = page.get('properties', {}).get('Published Time', {}).get('date', {}).get('start')
+
+                analytics_summary["sessions"].append({
+                    "id": page.get('id'),
+                    "content": content,
+                    "published_time": published_time
+                })
+
+            return analytics_summary
+
+        except Exception as e:
+            self.logger.error(f"Error retrieving engagement analytics: {e}")
+            return {"error": str(e)}
     
     def _build_post_properties(self, post: NotionPost) -> Dict[str, Any]:
         """Build Notion properties from NotionPost object for Local Businesses database"""

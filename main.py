@@ -441,6 +441,92 @@ async def run_basic_automation() -> Dict[str, Any]:
         results["errors"].append(f"basic_automation: {e}")
         return results
 
+async def run_engagement_automation() -> Dict[str, Any]:
+    """Run engagement automation - likes, retweets, comments, and responses"""
+
+    logger = logging.getLogger(__name__)
+    logger.info("🤝 Starting SME Analytica Engagement Automation")
+
+    results = {
+        "mode": "engagement",
+        "systems_active": ["engagement_automation", "twitter_manager"],
+        "opportunities_found": 0,
+        "actions_taken": 0,
+        "platforms_engaged": [],
+        "engagement_breakdown": {},
+        "errors": []
+    }
+
+    try:
+        # Initialize social media managers
+        from src.social.twitter_manager import TwitterManager
+        from src.social.linkedin_manager import LinkedInManager
+        from src.engagement.engagement_automation import EngagementAutomation
+        import os
+
+        # Initialize Twitter manager
+        twitter_credentials = {
+            "api_key": os.getenv("TWITTER_API_KEY"),
+            "api_secret": os.getenv("TWITTER_API_SECRET"),
+            "access_token": os.getenv("TWITTER_ACCESS_TOKEN"),
+            "access_token_secret": os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
+            "bearer_token": os.getenv("TWITTER_BEARER_TOKEN")
+        }
+
+        # Check if we have Twitter credentials
+        if not all(twitter_credentials.values()):
+            logger.error("❌ Missing Twitter API credentials for engagement automation")
+            results["errors"].append("missing_twitter_credentials")
+            return results
+
+        twitter_manager = TwitterManager(twitter_credentials)
+        results["systems_active"].append("twitter_manager")
+
+        # Initialize LinkedIn manager (optional)
+        linkedin_manager = None
+        try:
+            linkedin_credentials = {
+                "access_token": os.getenv("LINKEDIN_ACCESS_TOKEN"),
+                "refresh_token": os.getenv("LINKEDIN_REFRESH_TOKEN"),
+                "client_id": os.getenv("LINKEDIN_CLIENT_ID"),
+                "client_secret": os.getenv("LINKEDIN_CLIENT_SECRET"),
+                "organization_id": os.getenv("LINKEDIN_ORGANIZATION_ID")
+            }
+
+            if all(linkedin_credentials.values()):
+                linkedin_manager = LinkedInManager(linkedin_credentials)
+                results["systems_active"].append("linkedin_manager")
+                logger.info("✅ LinkedIn manager initialized")
+            else:
+                logger.info("ℹ️  LinkedIn credentials not available, skipping LinkedIn engagement")
+
+        except Exception as e:
+            logger.warning(f"LinkedIn manager initialization failed: {e}")
+
+        # Initialize engagement automation
+        engagement_automation = EngagementAutomation(twitter_manager, linkedin_manager)
+
+        # Run engagement automation
+        logger.info("🚀 Running engagement automation workflow...")
+        engagement_results = await engagement_automation.run_engagement_automation()
+
+        # Merge results
+        results.update(engagement_results)
+        results["systems_active"].append("engagement_automation")
+
+        # Get engagement statistics
+        engagement_stats = engagement_automation.get_engagement_stats()
+        results["engagement_stats"] = engagement_stats
+
+        logger.info(f"✅ Engagement automation completed: {results.get('actions_taken', 0)} actions taken")
+
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ Engagement automation failed: {e}")
+        results["errors"].append(f"engagement_automation: {e}")
+        return results
+
 async def run_content_only() -> Dict[str, Any]:
     """Generate content only"""
     
@@ -624,6 +710,7 @@ Examples:
   python main.py                        # Run enhanced automation (recommended)
   python main.py --mode=basic           # Run basic automation (fallback)
   python main.py --mode=content         # Generate content only
+  python main.py --mode=engagement      # Run engagement automation (likes, retweets, comments)
   python main.py --mode=analytics       # Run analytics only
   python main.py --status               # Show system status
         """
@@ -631,7 +718,7 @@ Examples:
     
     parser.add_argument(
         '--mode',
-        choices=['enhanced', 'basic', 'content', 'analytics'],
+        choices=['enhanced', 'basic', 'content', 'analytics', 'engagement'],
         default='enhanced',
         help='Operation mode (default: enhanced)'
     )
@@ -664,7 +751,7 @@ Examples:
         print_status()
     
     # Validate environment for modes that need external APIs
-    if args.mode in ['enhanced', 'basic'] and not validate_environment():
+    if args.mode in ['enhanced', 'basic', 'engagement'] and not validate_environment():
         logger.error("Environment validation failed, falling back to content-only mode")
         args.mode = 'content'
     
@@ -676,6 +763,8 @@ Examples:
             results = await run_basic_automation()
         elif args.mode == 'content':
             results = await run_content_only()
+        elif args.mode == 'engagement':
+            results = await run_engagement_automation()
         elif args.mode == 'analytics':
             results = await run_analytics_only()
         
