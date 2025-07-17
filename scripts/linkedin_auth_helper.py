@@ -11,10 +11,15 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 import time
 
-# Your LinkedIn App Credentials
-CLIENT_ID = "7707x12iau05l8"
-CLIENT_SECRET = "WPL_AP1.U8iKvcP9y1t1FbwZ.J+BCJA=="
+# Your LinkedIn App Credentials - Load from environment variables
+CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "7707x12iau05l8")
+CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")  # NEVER hardcode secrets!
 REDIRECT_URI = "http://localhost:8080/callback"
+
+if not CLIENT_SECRET:
+    print("❌ ERROR: LINKEDIN_CLIENT_SECRET environment variable not set!")
+    print("Please add LINKEDIN_CLIENT_SECRET to your .env file")
+    exit(1)
 
 # LinkedIn OAuth2 URLs
 AUTHORIZATION_URL = "https://www.linkedin.com/oauth/v2/authorization"
