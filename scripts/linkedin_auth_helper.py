@@ -41,7 +41,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                self.wfile.write(b"""
+                html_response = """
                 <html>
                 <body>
                 <h1>✅ Authorization Successful!</h1>
@@ -49,19 +49,21 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 <script>setTimeout(() => window.close(), 3000);</script>
                 </body>
                 </html>
-                """)
+                """
+                self.wfile.write(html_response.encode('utf-8'))
             else:
                 self.send_response(400)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                self.wfile.write(b"""
+                error_response = """
                 <html>
                 <body>
                 <h1>❌ Authorization Failed</h1>
                 <p>No authorization code received.</p>
                 </body>
                 </html>
-                """)
+                """
+                self.wfile.write(error_response.encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
