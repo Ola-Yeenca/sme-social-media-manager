@@ -42,12 +42,12 @@ class GrokEngagementFarmer:
         self.ai_manager = AIProviderManager(ai_config)
         self.notion_manager = NotionManager()
         self.logger = logging.getLogger(__name__)
-        
+
         # Engagement tracking
         self.daily_grok_questions = 0
-        self.daily_grok_limit = 3  # Conservative limit to avoid spam
+        self.daily_grok_limit = 5  # Increased for more flexibility
         self.last_grok_question_time = None
-        self.min_interval_between_questions = 3600  # 1 hour between questions
+        self.min_interval_between_questions = 1800  # 30 minutes between questions (more flexible)
         
         # Question categories and templates
         self.question_categories = {
@@ -87,80 +87,33 @@ class GrokEngagementFarmer:
             }
         }
         
-        # Pre-crafted strategic questions
-        self.strategic_questions = [
-            # Restaurant Analytics
-            GrokQuestion(
-                question="@grok What's the biggest mistake restaurants make when analyzing their menu profitability? I see so many missing the hidden costs in their calculations.",
-                category="restaurant_analytics",
-                expected_engagement="high",
-                follow_up_ready=True,
-                hashtags=["#RestaurantAnalytics", "#MenuOptimization", "#FoodBusiness"],
-                target_audience="restaurant owners"
-            ),
-            GrokQuestion(
-                question="@grok How should small restaurants track customer flow patterns without expensive analytics tools? Looking for practical approaches that actually work.",
-                category="restaurant_analytics", 
-                expected_engagement="high",
-                follow_up_ready=True,
-                hashtags=["#RestaurantTech", "#SmallBusiness", "#CustomerAnalytics"],
-                target_audience="small restaurant owners"
-            ),
-            GrokQuestion(
-                question="@grok What data points should restaurants prioritize when optimizing their delivery vs dine-in strategy? The profit margins can be drastically different.",
-                category="restaurant_analytics",
-                expected_engagement="medium",
-                follow_up_ready=True,
-                hashtags=["#DeliveryAnalytics", "#RestaurantStrategy", "#ProfitOptimization"],
-                target_audience="restaurant managers"
-            ),
-            
-            # SME Insights
-            GrokQuestion(
-                question="@grok What's the most underutilized data source that small businesses have access to but rarely analyze properly?",
-                category="sme_insights",
-                expected_engagement="high",
-                follow_up_ready=True,
-                hashtags=["#SmallBusiness", "#DataAnalytics", "#BusinessIntelligence"],
-                target_audience="SME owners"
-            ),
-            GrokQuestion(
-                question="@grok How can small businesses compete with enterprise-level analytics without the budget? There has to be a smarter approach than just 'buy expensive software'.",
-                category="sme_insights",
-                expected_engagement="high",
-                follow_up_ready=True,
-                hashtags=["#SMEAnalytics", "#BusinessIntelligence", "#SmallBusiness"],
-                target_audience="small business owners"
-            ),
-            
-            # Hospitality Tech
-            GrokQuestion(
-                question="@grok What's the biggest gap between what hotels think guests want vs what the data actually shows? I've seen some surprising disconnects.",
-                category="hospitality_tech",
-                expected_engagement="medium",
-                follow_up_ready=True,
-                hashtags=["#HospitalityTech", "#GuestExperience", "#HotelAnalytics"],
-                target_audience="hotel managers"
-            ),
-            
-            # Data Trends
-            GrokQuestion(
-                question="@grok What's the most practical way for small businesses to implement predictive analytics without hiring a data science team?",
-                category="data_trends",
-                expected_engagement="high",
-                follow_up_ready=True,
-                hashtags=["#PredictiveAnalytics", "#AIforSMEs", "#BusinessAutomation"],
-                target_audience="business decision makers"
-            ),
-            GrokQuestion(
-                question="@grok Why do so many businesses collect tons of data but still make gut-feeling decisions? What's the missing link in data-driven decision making?",
-                category="data_trends",
-                expected_engagement="high",
-                follow_up_ready=True,
-                hashtags=["#DataDriven", "#BusinessIntelligence", "#DecisionMaking"],
-                target_audience="business leaders"
-            )
-        ]
+        # AI-driven question generation - no hardcoded questions
+        # All questions will be dynamically generated by AI for maximum relevance and engagement
+        self.strategic_questions = []  # Fallback only, primary source is AI generation
+
+        # SME Analytica business context for AI generation
+        self.sme_context = {
+            "company": "SME Analytica",
+            "mission": "Making enterprise-level business intelligence accessible to SMEs",
+            "solutions": {
+                "MenuFlow": "AI-powered dynamic pricing and menu optimization for restaurants",
+                "FlowAnalytics": "Customer flow and behavior analysis for retail and hospitality",
+                "DataDriven": "Real-time analytics and predictive insights for SMEs",
+                "CostOptimizer": "Inventory and cost management with AI recommendations"
+            },
+            "target_markets": ["restaurants", "hotels", "retail stores", "cafes", "bars"],
+            "value_props": [
+                "10%+ margin improvements through dynamic pricing",
+                "Real-time analytics without technical complexity",
+                "AI-powered insights for non-technical business owners",
+                "Enterprise-level BI at SME-friendly prices"
+            ],
+            "expertise_areas": [
+                "menu optimization", "dynamic pricing", "customer flow analysis",
+                "inventory management", "predictive analytics", "business intelligence",
+                "cost reduction", "revenue optimization", "data-driven decision making"
+            ]
+        }
 
     async def run_grok_engagement_farming(self) -> Dict[str, Any]:
         """Run the Grok engagement farming workflow"""
@@ -230,80 +183,98 @@ class GrokEngagementFarmer:
         return True
 
     async def _select_strategic_question(self) -> Optional[GrokQuestion]:
-        """Generate a strategic question using AI based on current context"""
+        """Generate a strategic question using AI with deep business intelligence"""
 
-        # Determine category based on time of day
-        current_hour = datetime.now().hour
+        # Generate AI-powered question with full business context
+        return await self._generate_strategic_ai_question()
 
-        # Morning (8-12): Business strategy questions
-        if 8 <= current_hour < 12:
-            category = 'sme_insights'
-            audience_focus = 'business decision makers starting their day'
-        # Afternoon (12-17): Industry-specific questions
-        elif 12 <= current_hour < 17:
-            category = 'restaurant_analytics'
-            audience_focus = 'restaurant owners and managers during business hours'
-        # Evening (17-22): Broader analytics questions
-        else:
-            category = 'data_trends'
-            audience_focus = 'business professionals and analysts'
-
-        # Generate AI-powered question
-        return await self._generate_ai_question(category, audience_focus)
-
-    async def _generate_ai_question(self, category: str, audience_focus: str) -> Optional[GrokQuestion]:
-        """Generate a strategic question using AI"""
+    async def _generate_strategic_ai_question(self) -> Optional[GrokQuestion]:
+        """Generate a strategic question using AI with deep business intelligence and market awareness"""
 
         try:
-            # Get category details
-            category_info = self.question_categories.get(category, {})
-            topics = category_info.get('topics', [])
-            hashtags = category_info.get('hashtags', [])
+            # Get current business context
+            current_hour = datetime.now().hour
+            current_day = datetime.now().strftime("%A")
+            current_month = datetime.now().strftime("%B")
 
-            # Create AI prompt for question generation
+            # Determine strategic focus based on timing and business cycles
+            if 6 <= current_hour < 12:
+                business_phase = "morning_operations"
+                focus_area = "operational efficiency and daily planning"
+                target_audience = "restaurant owners and managers starting their day"
+            elif 12 <= current_hour < 17:
+                business_phase = "midday_performance"
+                focus_area = "real-time performance analysis and optimization"
+                target_audience = "business decision makers monitoring performance"
+            else:
+                business_phase = "evening_strategy"
+                focus_area = "strategic planning and growth optimization"
+                target_audience = "business leaders and analysts planning ahead"
+
+            # Choose engagement style for maximum viral potential
+            engagement_styles = [
+                "viral_challenge",
+                "thought_leadership",
+                "collaborative_insight",
+                "industry_disruption",
+                "data_revelation"
+            ]
+
+            style = random.choice(engagement_styles)
+
+            # Create comprehensive AI prompt for strategic question generation
             prompt = f"""
-            Generate a strategic question to ask @grok on Twitter that will generate valuable engagement for SME Analytica.
+            You are a strategic business influencer for SME Analytica, an AI-driven analytics platform that makes enterprise-level business intelligence accessible to SMEs (restaurants, hotels, retail).
 
-            Context:
-            - SME Analytica provides AI-driven analytics for restaurants, hotels, and retail businesses
-            - We specialize in menu optimization, dynamic pricing, customer flow analysis, and business intelligence
-            - Target audience: {audience_focus}
-            - Category: {category.replace('_', ' ')}
-            - Relevant topics: {', '.join(topics[:5])}
+            COMPANY CONTEXT:
+            {self.sme_context}
 
-            IMPORTANT STYLE REQUIREMENTS:
-            - Acknowledge that @grok is an AI (e.g., "if you were a restaurant owner", "from an AI perspective")
-            - Structure as: Question to @grok + Our solution/expertise + Follow-up question to @grok
-            - Be conversational and natural
-            - Position SME Analytica as the helpful expert with solutions
-            - Make it feel like a genuine conversation between AIs about helping businesses
+            CURRENT BUSINESS CONTEXT:
+            - Time: {current_hour}:00 on {current_day} in {current_month}
+            - Business Phase: {business_phase}
+            - Focus Area: {focus_area}
+            - Target Audience: {target_audience}
 
-            PERFECT EXAMPLE FORMAT:
-            "@grok do Restaurant owners ever wonder how much profit they're leaving on the table during their busiest hours?
+            ENGAGEMENT STYLE: {style}
 
-            Wanna help them explain how with our dynamic menu pricing and flow analytics, they could be capturing 10%+ higher margins when demand peaks.
+            MISSION: Generate a strategic question to ask @grok on Twitter that will:
+            1. Position SME Analytica as a thought leader in business analytics
+            2. Generate viral engagement and meaningful business conversations
+            3. Attract potential customers from our target markets
+            4. Showcase our expertise in data-driven business optimization
+            5. Create opportunities for lead generation and brand awareness
 
-            Also, @grok what is your strategy for maximizing revenue when things get hectic, if you were a restaurant owner?"
+            STYLE GUIDELINES:
+            - {style.replace('_', ' ').title()}: Be innovative, insightful, and engaging
+            - Address real business pain points that SMEs face daily
+            - Demonstrate deep understanding of industry challenges
+            - Position SME Analytica as the solution provider
+            - Use conversational tone that builds trust and authority
+            - Include strategic business insights that showcase expertise
 
-            Generate a question following this EXACT conversational style and structure:
-            1. "@grok do [target audience] ever [question about their challenge]?"
-            2. "Wanna help them explain how with our [SME Analytica solution], they could [benefit]."
-            3. "Also, @grok what is your [related question], if you were a [target role]?"
+            QUESTION REQUIREMENTS:
+            - Start with "@grok" to ensure proper engagement
+            - Maximum 280 characters total
+            - Include relevant business hashtags (2-3 max)
+            - Be authentic and valuable, not salesy
+            - Encourage responses and viral sharing
+            - Demonstrate thought leadership in business analytics
 
-            Keep it natural, conversational, and helpful. Maximum 280 characters total.
+            Generate a strategic question that a true business influencer would ask to drive meaningful engagement and position SME Analytica as the go-to analytics solution for SMEs.
             """
 
-            # Create content request
+            # Create content request for AI generation
             content_request = ContentRequest(
                 content_type=ContentType.TWEET,
                 language='en',
-                theme=f'grok_question_{category}',
-                max_length=200,
+                theme=f'grok_strategic_question_{style}',
+                max_length=280,
                 context={
                     'prompt': prompt,
-                    'category': category,
-                    'audience': audience_focus,
-                    'topics': topics
+                    'business_phase': business_phase,
+                    'target_audience': target_audience,
+                    'engagement_style': style,
+                    'sme_context': self.sme_context
                 }
             )
 
@@ -321,22 +292,56 @@ class GrokEngagementFarmer:
                 if '@grok' not in question_text.lower():
                     question_text = f"@grok {question_text}"
 
+                # Extract relevant hashtags based on content
+                relevant_hashtags = self._extract_relevant_hashtags(question_text, style)
+
                 # Create GrokQuestion object
                 return GrokQuestion(
                     question=question_text,
-                    category=category,
+                    category=f"ai_generated_{style}",
                     expected_engagement="high",  # AI-generated questions are expected to be high quality
                     follow_up_ready=True,
-                    hashtags=hashtags[:3],  # Use top 3 hashtags for the category
-                    target_audience=audience_focus
+                    hashtags=relevant_hashtags,
+                    target_audience=target_audience
                 )
 
         except Exception as e:
-            self.logger.error(f"Error generating AI question: {e}")
+            self.logger.error(f"Error generating strategic AI question: {e}")
 
-        # Fallback to pre-crafted questions if AI generation fails
-        suitable_questions = [q for q in self.strategic_questions if q.category == category]
-        return random.choice(suitable_questions) if suitable_questions else None
+        # Fallback: return None if AI generation fails
+        return None
+
+    def _extract_relevant_hashtags(self, question_text: str, style: str) -> List[str]:
+        """Extract relevant hashtags based on question content and style"""
+
+        # Base hashtags for SME Analytica
+        base_hashtags = ["#SMEAnalytica", "#BusinessIntelligence", "#DataDriven"]
+
+        # Style-specific hashtags
+        style_hashtags = {
+            "viral_challenge": ["#SMEAnalytica", "#BusinessChallenge", "#SMEGrowth", "#Innovation"],
+            "thought_leadership": ["#SMEAnalytica", "#BusinessStrategy", "#Analytics", "#Leadership"],
+            "collaborative_insight": ["#SMEAnalytica", "#BusinessInsights", "#Collaboration", "#SMESuccess"],
+            "industry_disruption": ["#SMEAnalytica", "#Disruption", "#TechInnovation", "#FutureOfBusiness"],
+            "data_revelation": ["#SMEAnalytica", "#DataInsights", "#BusinessOptimization", "#SmartBusiness"]
+        }
+
+        # Content-based hashtags
+        content_hashtags = []
+        question_lower = question_text.lower()
+
+        if any(word in question_lower for word in ["restaurant", "menu", "food", "dining"]):
+            content_hashtags.extend(["#RestaurantTech", "#MenuOptimization"])
+        if any(word in question_lower for word in ["hotel", "hospitality", "guest"]):
+            content_hashtags.extend(["#HospitalityTech", "#GuestExperience"])
+        if any(word in question_lower for word in ["retail", "store", "inventory"]):
+            content_hashtags.extend(["#RetailTech", "#InventoryManagement"])
+        if any(word in question_lower for word in ["pricing", "price", "margin"]):
+            content_hashtags.extend(["#DynamicPricing", "#ProfitOptimization"])
+
+        # Combine and return top 3
+        all_hashtags = base_hashtags + style_hashtags.get(style, []) + content_hashtags
+        return list(dict.fromkeys(all_hashtags))[:3]  # Remove duplicates and limit to 3
 
     async def _ask_grok_question(self, question: GrokQuestion) -> Optional[str]:
         """Ask a strategic question to Grok"""

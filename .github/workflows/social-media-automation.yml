@@ -24,6 +24,7 @@ on:
         - enhanced
         - basic
         - content
+        - engagement
         - analytics
 
 jobs:
