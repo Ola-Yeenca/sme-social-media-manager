@@ -313,8 +313,8 @@ class EngagementAutomation:
                     actions.append(action)
                     self._increment_engagement_count(opportunity.platform, action_type)
 
-                    # Add delay between actions to appear natural
-                    await asyncio.sleep(random.uniform(2, 8))
+                    # Minimal delay for fast execution
+                    await asyncio.sleep(0.5)
 
             except Exception as e:
                 self.logger.error(f"Error processing engagement opportunity: {e}")
@@ -468,7 +468,7 @@ class EngagementAutomation:
 
                     if reply_id:
                         self._increment_engagement_count("twitter", "replies")
-                        await asyncio.sleep(random.uniform(3, 10))
+                        await asyncio.sleep(0.5)
 
         except Exception as e:
             self.logger.error(f"Error responding to mentions: {e}")
@@ -513,7 +513,7 @@ class EngagementAutomation:
 
                     if success:
                         self._increment_engagement_count("twitter", "likes")
-                        await asyncio.sleep(random.uniform(1, 4))
+                        await asyncio.sleep(0.2)
 
             except Exception as e:
                 self.logger.error(f"Error engaging with conversations for {keyword}: {e}")

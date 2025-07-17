@@ -58,34 +58,7 @@ jobs:
         echo "Current time: $(date)"
         echo "Triggered by: ${{ github.event_name }}"
     
-    - name: Debug environment
-      run: |
-        echo "=== Environment Debug ==="
-        echo "Python version: $(python --version)"
-        echo "Current directory: $(pwd)"
-        echo "Files in current directory:"
-        ls -la
-        echo "Environment variables (secrets masked):"
-        echo "NOTION_TOKEN: ${{ secrets.NOTION_TOKEN != '' && 'SET' || 'NOT SET' }}"
-        echo "TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY != '' && 'SET' || 'NOT SET' }}"
-        echo "OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' && 'SET' || 'NOT SET' }}"
-    
-    - name: Test system components
-      env:
-        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-        SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
-        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
-        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
-        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-      run: |
-        echo "Running system tests..."
-        python scripts/debug_automation.py
+    # Skip debug steps for faster execution
     
     - name: Run automation based on trigger
       env:
