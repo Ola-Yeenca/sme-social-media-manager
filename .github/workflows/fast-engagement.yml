@@ -17,15 +17,15 @@ jobs:
       uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.11'
         cache: 'pip'
-    
-    - name: Install dependencies (minimal)
+
+    - name: Install dependencies (AI-optimized)
       run: |
         python -m pip install --upgrade pip
-        pip install tweepy anthropic notion-client python-dotenv
+        pip install tweepy anthropic openai notion-client python-dotenv httpx
     
     - name: Run Grok Engagement
       env:
@@ -40,17 +40,19 @@ jobs:
         NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
         SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
         
-        # AI Provider (Anthropic preferred)
+        # AI Providers (for dynamic question generation)
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
       run: |
-        echo "🤖 Starting fast Grok engagement at $(date)"
+        echo "🤖 Starting AI-driven Grok engagement at $(date)"
         echo "Madrid time: $(TZ='Europe/Madrid' date '+%Y-%m-%d %H:%M %Z')"
-        
-        # Run engagement mode only - fast execution
+
+        # Run AI-powered engagement mode - strategic business influence
         python3 main.py --mode=engagement --quiet
-        
-        echo "✅ Grok engagement completed at $(date)"
+
+        echo "✅ AI-driven Grok engagement completed at $(date)"
     
     - name: Upload minimal logs
       if: always()
