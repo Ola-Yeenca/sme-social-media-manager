@@ -86,20 +86,27 @@ class LinkedInManager:
         return True
     
     async def post_to_linkedin(self, content: str, image_url: Optional[str] = None) -> Optional[str]:
-        """Post content to LinkedIn company page"""
-        
+        """Post content to LinkedIn (personal or company page)"""
+
         if not self._validate_post_content(content):
             self.logger.error(f"Invalid LinkedIn post content: {content}")
             return None
-        
+
         if not self._can_post():
             self.logger.warning("Rate limit reached, skipping LinkedIn post")
             return None
-        
+
         try:
+            # Determine author URN - use personal profile if no organization ID
+            if self.organization_id and self.organization_id != "placeholder":
+                author_urn = f"urn:li:organization:{self.organization_id}"
+            else:
+                # Post as personal profile
+                author_urn = "urn:li:person:~"
+
             # Prepare post data
             post_data = {
-                "author": f"urn:li:organization:{self.organization_id}",
+                "author": author_urn,
                 "lifecycleState": "PUBLISHED",
                 "specificContent": {
                     "com.linkedin.ugc.ShareContent": {

@@ -41,10 +41,11 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
+                
                 html_response = """
                 <html>
                 <body>
-                <h1>✅ Authorization Successful!</h1>
+                <h1>Authorization Successful!</h1>
                 <p>You can close this window and return to the terminal.</p>
                 <script>setTimeout(() => window.close(), 3000);</script>
                 </body>
@@ -55,10 +56,11 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
+                
                 error_response = """
                 <html>
                 <body>
-                <h1>❌ Authorization Failed</h1>
+                <h1>Authorization Failed</h1>
                 <p>No authorization code received.</p>
                 </body>
                 </html>
@@ -103,7 +105,7 @@ def exchange_code_for_token(auth_code):
         token_data = response.json()
         return token_data.get('access_token')
     else:
-        print(f"❌ Token exchange failed: {response.status_code}")
+        print(f"Token exchange failed: {response.status_code}")
         print(f"Response: {response.text}")
         return None
 
@@ -126,7 +128,7 @@ def get_organization_id(access_token):
         data = response.json()
         organizations = data.get('elements', [])
         
-        print(f"\n📋 Found {len(organizations)} organization(s):")
+        print(f"\nFound {len(organizations)} organization(s):")
         for org in organizations:
             org_urn = org.get('organization')
             if org_urn:
@@ -136,18 +138,18 @@ def get_organization_id(access_token):
         
         return None
     else:
-        print(f"❌ Failed to get organizations: {response.status_code}")
+        print(f"Failed to get organizations: {response.status_code}")
         print(f"Response: {response.text}")
         return None
 
 def main():
     """Main authentication flow"""
     
-    print("🔗 SME Analytica LinkedIn Authentication Helper")
+    print("SME Analytica LinkedIn Authentication Helper")
     print("=" * 50)
     
     # Step 1: Start local server for callback
-    print("1️⃣ Starting local callback server...")
+    print("1. Starting local callback server...")
     server = HTTPServer(('localhost', 8080), CallbackHandler)
     server.auth_code = None
     
@@ -158,13 +160,13 @@ def main():
     
     # Step 2: Open authorization URL
     auth_url = get_authorization_url()
-    print(f"2️⃣ Opening LinkedIn authorization page...")
+    print(f"2. Opening LinkedIn authorization page...")
     print(f"   URL: {auth_url}")
     
     webbrowser.open(auth_url)
     
     # Step 3: Wait for callback
-    print("3️⃣ Waiting for authorization (please complete in browser)...")
+    print("3. Waiting for authorization (please complete in browser)...")
     
     timeout = 120  # 2 minutes timeout
     start_time = time.time()
@@ -175,31 +177,31 @@ def main():
     server.shutdown()
     
     if server.auth_code is None:
-        print("❌ Authorization timed out or failed")
+        print("Authorization timed out or failed")
         return
     
-    print("✅ Authorization code received!")
+    print("Authorization code received!")
     
     # Step 4: Exchange code for token
-    print("4️⃣ Exchanging code for access token...")
+    print("4. Exchanging code for access token...")
     access_token = exchange_code_for_token(server.auth_code)
     
     if not access_token:
-        print("❌ Failed to get access token")
+        print("Failed to get access token")
         return
     
-    print("✅ Access token obtained!")
+    print("Access token obtained!")
     
     # Step 5: Get organization ID
-    print("5️⃣ Getting organization ID...")
+    print("5. Getting organization ID...")
     org_id = get_organization_id(access_token)
     
     if not org_id:
-        print("❌ Failed to get organization ID")
+        print("Failed to get organization ID")
         return
     
     # Step 6: Display results
-    print("\n🎉 LinkedIn Integration Setup Complete!")
+    print("\nLinkedIn Integration Setup Complete!")
     print("=" * 50)
     print("Add these to your .env file:")
     print()
@@ -210,7 +212,7 @@ def main():
     print(f"  LINKEDIN_ACCESS_TOKEN: {access_token}")
     print(f"  LINKEDIN_ORGANIZATION_ID: {org_id}")
     print()
-    print("🚀 Your SME Analytica automation can now post to LinkedIn!")
+    print("Your SME Analytica automation can now post to LinkedIn!")
 
 if __name__ == "__main__":
     main()

@@ -20,7 +20,7 @@ class ContentRequest:
     language: str
     theme: str
     context: Dict[str, Any]
-    max_length: int = 280
+    max_length: int = 1000  # Flexible length for Twitter subscription and LinkedIn
     hashtags: Optional[List[str]] = None
     tone: str = "conversational_expert"
 

@@ -125,9 +125,10 @@ class OpenAIProvider(BaseAIProvider):
         
         return f"""
         Create a {request.content_type.value} for SME Analytica in {request.language}.
-        
+
         Theme: {request.theme}
-        Max length: {request.max_length} characters
+        Length: Be flexible! Twitter subscription allows longer posts, LinkedIn supports up to 3000 chars
+        Create engaging, detailed content that tells a complete story
         Tone: {request.tone}
         
         Context:
@@ -203,6 +204,12 @@ class OpenAIProvider(BaseAIProvider):
         Always provide actionable insights, use specific data points (especially the proven 10% margin boost),
         and position SME Analytica as the friendly AI analyst that delivers real, measurable results for small businesses.
         Make business owners feel smarter and more confident about using data to grow their business.
+
+        IMPORTANT FORMATTING RULES:
+        - Do NOT wrap the content in quotation marks
+        - Write the content directly without quotes around it
+        - Make it sound natural and authentic, not AI-generated
+        - Avoid any formatting that makes it look like a quoted statement
         """
     
     def _extract_hashtags(self, text: str, suggested_hashtags: List[str]) -> List[str]:

@@ -100,16 +100,16 @@ class SocialMediaManager:
 
         # LinkedIn credentials (optional)
         linkedin_access_token = getattr(settings, 'linkedin_access_token', None)
-        linkedin_organization_id = getattr(settings, 'linkedin_organization_id', None)
+        linkedin_organization_id = getattr(settings, 'linkedin_organization_id', 'placeholder')
 
-        if linkedin_access_token and linkedin_organization_id:
+        if linkedin_access_token:
             credentials = {
                 "access_token": linkedin_access_token,
-                "organization_id": linkedin_organization_id
+                "organization_id": linkedin_organization_id  # Can be placeholder for personal posts
             }
             return LinkedInManager(credentials)
         else:
-            self.logger.info("LinkedIn credentials not provided, LinkedIn posting disabled")
+            self.logger.info("LinkedIn access token not provided, LinkedIn posting disabled")
             return None
     
     def _initialize_database(self):

@@ -86,14 +86,18 @@ class TwitterManager:
             self.logger.error(f"Failed to initialize Twitter clients: {e}")
             raise
     
-    async def post_tweet(self, content: str, reply_to_tweet_id: Optional[str] = None, 
+    async def post_tweet(self, content: str, reply_to_tweet_id: Optional[str] = None,
                         media_ids: Optional[List[str]] = None) -> Optional[str]:
         """Post a tweet with content validation and rate limiting"""
-        
+
         # Validate content
         if not self._validate_tweet_content(content):
             self.logger.error(f"Invalid tweet content: {content}")
             return None
+
+        # Twitter subscription allows longer posts - use full content
+        truncated_content = content
+        self.logger.info(f"Posting full content ({len(content)} characters) - Twitter subscription active")
         
         # Check rate limiting
         if not self._can_tweet():
@@ -103,7 +107,7 @@ class TwitterManager:
         try:
             # Post tweet using v2 API
             response = self.client.create_tweet(
-                text=content,
+                text=truncated_content,
                 in_reply_to_tweet_id=reply_to_tweet_id,
                 media_ids=media_ids
             )
@@ -370,20 +374,58 @@ class TwitterManager:
     
     def _validate_tweet_content(self, content: str) -> bool:
         """Validate tweet content before posting"""
-        
+
         if not content or len(content.strip()) == 0:
             return False
-        
-        if len(content) > 280:
-            return False
-        
+
         # Check for spam indicators
         spam_indicators = ['buy now', 'click here', 'limited time', 'free money']
         content_lower = content.lower()
         if any(indicator in content_lower for indicator in spam_indicators):
             return False
-        
+
         return True
+
+    def _truncate_tweet_content(self, content: str) -> str:
+        """Intelligently truncate tweet content to fit within 280 characters"""
+
+        if len(content) <= 280:
+            return content
+
+        # Extract hashtags from the end
+        import re
+        hashtag_pattern = r'(#\w+(?:\s+#\w+)*)\s*$'
+        hashtag_match = re.search(hashtag_pattern, content)
+        hashtags = hashtag_match.group(1) if hashtag_match else ""
+
+        # Calculate available space for main content
+        available_chars = 280 - len(hashtags) - (1 if hashtags else 0)  # -1 for space before hashtags
+
+        # Remove hashtags from content for truncation
+        main_content = re.sub(hashtag_pattern, '', content).strip()
+
+        if len(main_content) <= available_chars:
+            return f"{main_content} {hashtags}".strip()
+
+        # Truncate main content, trying to end at a word boundary
+        truncated = main_content[:available_chars-3]  # -3 for "..."
+
+        # Try to end at a word boundary
+        last_space = truncated.rfind(' ')
+        if last_space > available_chars * 0.8:  # Only use word boundary if it's not too short
+            truncated = truncated[:last_space]
+
+        # Add ellipsis and hashtags
+        result = f"{truncated}... {hashtags}".strip()
+
+        # Final safety check
+        if len(result) > 280:
+            # Emergency truncation
+            excess = len(result) - 280
+            truncated = truncated[:-excess-3]
+            result = f"{truncated}... {hashtags}".strip()
+
+        return result
     
     def _can_tweet(self) -> bool:
         """Check if we can post a new tweet based on rate limiting"""

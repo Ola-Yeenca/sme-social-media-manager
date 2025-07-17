@@ -176,7 +176,8 @@ class AnthropicProvider(BaseAIProvider):
         Task: Create a {request.content_type.value} with these specifications:
         - Theme: {request.theme}
         - Language: {language_instruction}
-        - Max length: {request.max_length} characters
+        - Length: Be flexible! Twitter subscription allows longer posts, LinkedIn supports up to 3000 chars
+        - Create engaging, detailed content that tells a complete story
         - Tone: Expert but conversational, like a friendly data consultant
 
         Context for this post:
@@ -190,7 +191,7 @@ class AnthropicProvider(BaseAIProvider):
         - Fact Friday: Industry statistics, trends, educational content
         - Weekend Insights: Lighter content, tips, community engagement
 
-        Content guidelines:
+        Content guidelines for longer, more engaging posts:
         - Focus on practical business value and actionable insights
         - Use specific data points (especially the proven 10% margin boost)
         - Reference real SME Analytica capabilities and results
@@ -198,6 +199,10 @@ class AnthropicProvider(BaseAIProvider):
         - Include relevant hashtags naturally
         - Position SME Analytica as the helpful AI analyst that delivers real results
         - Make business owners feel smarter and more confident about using data
+        - Tell complete stories with beginning, middle, and end
+        - Include multiple insights or tips in a single post
+        - Add context and background to make content more valuable
+        - Use longer format to provide deeper insights and more actionable advice
 
         VIRAL OPTIMIZATION REQUIREMENTS:
         - Create COMPLETELY UNIQUE content - no repeated phrases, structures, or approaches
@@ -211,6 +216,12 @@ class AnthropicProvider(BaseAIProvider):
         - Create content that sparks genuine discussion and sharing
 
         Create engaging content that educates, inspires, and showcases SME Analytica's proven value.
+
+        IMPORTANT FORMATTING RULES:
+        - Do NOT wrap the content in quotation marks
+        - Write the content directly without quotes around it
+        - Make it sound natural and authentic, not AI-generated
+        - Avoid any formatting that makes it look like a quoted statement
         """
     
     def _extract_hashtags(self, text: str, suggested_hashtags: List[str]) -> List[str]:

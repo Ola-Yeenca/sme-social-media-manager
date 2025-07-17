@@ -170,6 +170,7 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 content_type=ContentType.TWEET,
                 language='en',
                 theme=today_theme.value,
+                max_length=1000,  # Allow longer content for Twitter subscription and LinkedIn
                 context={
                     'target_audience': 'restaurant owners',
                     'focus': 'practical business value',
@@ -223,6 +224,9 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 # Use generated content and clean it up
                 tweet_text = content["text"]
 
+                # Remove any quotation marks to avoid AI-generated appearance
+                tweet_text = tweet_text.strip('"').strip("'").strip()
+
                 # Remove duplicate hashtags and ensure proper formatting
                 unique_hashtags = list(dict.fromkeys(content["hashtags"]))  # Remove duplicates
                 hashtag_text = " ".join(unique_hashtags)
@@ -233,12 +237,8 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 else:
                     full_tweet = f"{tweet_text} {hashtag_text}"
 
-                # Ensure tweet is under 280 characters
-                if len(full_tweet) > 280:
-                    # Truncate text and add essential hashtags
-                    available_length = 280 - len(hashtag_text) - 4  # 4 for " ..."
-                    truncated_text = tweet_text[:available_length] + "..."
-                    full_tweet = f"{truncated_text} {hashtag_text}"
+                # Twitter subscription allows longer posts - no character limit needed
+                # Keep full content for better engagement
 
                 logger.info(f"📝 Final tweet ({len(full_tweet)} chars): {full_tweet}")
 
@@ -251,21 +251,27 @@ async def run_enhanced_automation() -> Dict[str, Any]:
 
                     # Save to Notion database
                     try:
-                        from notion import NotionManager
+                        from notion import NotionManager, SocialMediaPost, PostStatus, Platform, PostType
                         notion = NotionManager()
 
-                        # Create post entry in Notion
-                        notion_post = notion.create_post(
+                        # Create SocialMediaPost object
+                        social_post = SocialMediaPost(
+                            name=f"SME Analytica - {today_theme} {datetime.now().strftime('%Y-%m-%d')}",
                             content=tweet_text,
-                            hashtags=content["hashtags"],
-                            platform="Twitter",
-                            status="Published",
+                            status=PostStatus.PUBLISHED,
+                            platform=Platform.TWITTER,
+                            post_type=PostType.INFORMATIONAL,
+                            published_time=datetime.now(),
                             tweet_id=post_result,
-                            viral_score=content['predicted_metrics'].virality_score,
-                            theme=str(today_theme)
+                            tags=content["hashtags"],
+                            ai_provider_used=content.get('provider', 'Unknown'),
+                            content_theme=str(today_theme)
                         )
 
-                        if notion_post:
+                        # Create post entry in Notion
+                        notion_post_id = notion.create_post(social_post)
+
+                        if notion_post_id:
                             logger.info("✅ Post saved to Notion database")
                         else:
                             logger.warning("⚠️ Failed to save post to Notion")
@@ -282,8 +288,63 @@ async def run_enhanced_automation() -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"❌ Twitter posting failed: {e}")
             results["errors"].append(f"twitter_posting: {e}")
-        
-        # 3. Update analytics (simplified for cloud environment)
+
+        # 3. Post content to LinkedIn
+        logger.info("📤 Publishing content to LinkedIn...")
+        try:
+            from src.social.linkedin_manager import LinkedInManager
+
+            # Initialize LinkedIn manager with credentials
+            linkedin_credentials = {
+                "access_token": os.getenv("LINKEDIN_ACCESS_TOKEN"),
+                "organization_id": os.getenv("LINKEDIN_ORGANIZATION_ID")
+            }
+            linkedin = LinkedInManager(linkedin_credentials)
+
+            if results["content_generated"] > 0:
+                # Adapt content for LinkedIn (longer format allowed)
+                linkedin_text = content["text"]
+
+                # Remove any quotation marks to avoid AI-generated appearance
+                linkedin_text = linkedin_text.strip('"').strip("'").strip()
+
+                # LinkedIn allows up to 3000 characters, so we can be more detailed
+                if len(linkedin_text) > 3000:
+                    # Truncate if needed, but preserve hashtags
+                    import re
+                    hashtag_pattern = r'(#\w+(?:\s+#\w+)*)\s*$'
+                    hashtag_match = re.search(hashtag_pattern, linkedin_text)
+                    hashtags = hashtag_match.group(1) if hashtag_match else ""
+
+                    main_content = re.sub(hashtag_pattern, '', linkedin_text).strip()
+                    available_chars = 3000 - len(hashtags) - (1 if hashtags else 0)
+
+                    if len(main_content) > available_chars:
+                        truncated = main_content[:available_chars-3]
+                        last_space = truncated.rfind(' ')
+                        if last_space > available_chars * 0.8:
+                            truncated = truncated[:last_space]
+                        linkedin_text = f"{truncated}... {hashtags}".strip()
+
+                logger.info(f"📝 LinkedIn post ({len(linkedin_text)} chars): {linkedin_text[:100]}...")
+
+                # Post to LinkedIn
+                linkedin_result = await linkedin.post_to_linkedin(linkedin_text)
+
+                if linkedin_result:
+                    logger.info(f"✅ LinkedIn post published successfully: {linkedin_result}")
+                    results["linkedin_published"] = 1
+                else:
+                    logger.error("❌ Failed to post to LinkedIn")
+                    results["errors"].append("linkedin_posting: Failed to post content")
+
+            results["systems_active"].append("linkedin_posting")
+
+        except Exception as e:
+            logger.error(f"❌ LinkedIn posting failed: {e}")
+            results["errors"].append(f"linkedin_posting: {e}")
+
+        # 4. Update analytics (simplified for cloud environment)
         logger.info("📊 Updating analytics...")
         try:
             # Ensure data directory exists
@@ -298,6 +359,7 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 "timestamp": datetime.now().isoformat(),
                 "content_generated": results.get("content_generated", 0),
                 "posts_published": results.get("posts_published", 0),
+                "linkedin_published": results.get("linkedin_published", 0),
                 "engagements_completed": results.get("engagements_completed", 0),
                 "systems_active": results.get("systems_active", [])
             }
@@ -311,8 +373,8 @@ async def run_enhanced_automation() -> Dict[str, Any]:
             results["errors"].append(f"analytics: {e}")
             # Don't fail the entire automation for analytics issues
             results["analytics_updated"] = False
-        
-        # 4. Community engagement (simplified for demo)
+
+        # 5. Community engagement (simplified for demo)
         logger.info("🤝 Processing community engagement...")
         try:
             from community.influencer_targeting import InfluencerTargeting
@@ -418,6 +480,7 @@ async def run_content_only() -> Dict[str, Any]:
                 content_type=ContentType.TWEET,
                 language='en',
                 theme='data_monday',
+                max_length=1000,  # Allow longer content for Twitter subscription and LinkedIn
                 context={
                     'target_audience': 'restaurant owners',
                     'focus': 'practical business value',
