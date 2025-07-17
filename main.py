@@ -377,7 +377,7 @@ async def run_enhanced_automation() -> Dict[str, Any]:
         # 5. Community engagement (simplified for demo)
         logger.info("🤝 Processing community engagement...")
         try:
-            from community.influencer_targeting import InfluencerTargeting
+            from src.community.influencer_targeting import InfluencerTargeting
             
             engagement_system = InfluencerTargeting()
             # In production, this would find and engage with real opportunities
@@ -589,13 +589,13 @@ def print_status():
         systems_status["Analytics Dashboard"] = "❌ Not Available"
     
     try:
-        from community.influencer_targeting import InfluencerTargeting
+        from src.community.influencer_targeting import InfluencerTargeting
         systems_status["Community Engagement"] = "✅ Available"
     except:
         systems_status["Community Engagement"] = "❌ Not Available"
     
     try:
-        from strategy.hashtag_intelligence import HashtagIntelligenceAgent
+        from src.strategy.hashtag_intelligence import HashtagIntelligenceAgent
         systems_status["Hashtag Intelligence"] = "✅ Available"
     except:
         systems_status["Hashtag Intelligence"] = "❌ Not Available"

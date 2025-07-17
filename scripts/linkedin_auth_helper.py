@@ -10,6 +10,7 @@ import webbrowser
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 import time
+import os
 
 # Your LinkedIn App Credentials - Load from environment variables
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "7707x12iau05l8")
