@@ -16,7 +16,7 @@ from ..social.linkedin_manager import LinkedInManager
 from ..content.content_generator import ContentGenerator
 from ..notion.notion_manager import NotionManager
 from .grok_engagement import GrokEngagementFarmer
-from ai_providers import AIProviderManager, ContentRequest, ContentType
+from ..ai_providers import AIProviderManager, ContentRequest, ContentType
 from config.settings import sme_context
 
 

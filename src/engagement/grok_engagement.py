@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from ..social.twitter_manager import TwitterManager
 from ..notion.notion_manager import NotionManager
-from ai_providers import AIProviderManager, ContentRequest, ContentType
+from ..ai_providers import AIProviderManager, ContentRequest, ContentType
 
 
 @dataclass
