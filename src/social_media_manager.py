@@ -19,6 +19,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from ai_providers import AIProviderManager, ContentRequest, ContentType, ProviderStrategy
 from content.growth_content_generator import GrowthOptimizedContentGenerator, ContentTheme, Language, GrowthStrategy
 from social.twitter_manager import TwitterManager, Tweet
+from social.linkedin_manager import LinkedInManager
 from config.settings import settings, sme_context
 from notion import NotionManager, SocialMediaPost, PostStatus, Platform, PostType
 
@@ -53,6 +54,7 @@ class SocialMediaManager:
         self.ai_manager = self._initialize_ai_manager()
         self.content_generator = GrowthOptimizedContentGenerator()
         self.twitter_manager = self._initialize_twitter_manager()
+        self.linkedin_manager = self._initialize_linkedin_manager()
 
         # Notion database manager
         self.notion_manager = NotionManager()
@@ -82,7 +84,7 @@ class SocialMediaManager:
     
     def _initialize_twitter_manager(self) -> TwitterManager:
         """Initialize Twitter API manager"""
-        
+
         credentials = {
             "api_key": settings.twitter_api_key,
             "api_secret": settings.twitter_api_secret,
@@ -90,8 +92,25 @@ class SocialMediaManager:
             "access_token_secret": settings.twitter_access_token_secret,
             "bearer_token": settings.twitter_bearer_token
         }
-        
+
         return TwitterManager(credentials)
+
+    def _initialize_linkedin_manager(self) -> Optional[LinkedInManager]:
+        """Initialize LinkedIn API manager"""
+
+        # LinkedIn credentials (optional)
+        linkedin_access_token = getattr(settings, 'linkedin_access_token', None)
+        linkedin_organization_id = getattr(settings, 'linkedin_organization_id', None)
+
+        if linkedin_access_token and linkedin_organization_id:
+            credentials = {
+                "access_token": linkedin_access_token,
+                "organization_id": linkedin_organization_id
+            }
+            return LinkedInManager(credentials)
+        else:
+            self.logger.info("LinkedIn credentials not provided, LinkedIn posting disabled")
+            return None
     
     def _initialize_database(self):
         """Initialize SQLite database for tracking"""
@@ -437,21 +456,40 @@ class SocialMediaManager:
 
         for post in ready_posts:
             try:
-                # Post to Twitter directly with content
+                # Post to Twitter
                 tweet_id = await self.twitter_manager.post_tweet(post.content)
+                linkedin_post_id = None
+
+                # Also post to LinkedIn if available and it's a business-focused post
+                if self.linkedin_manager and self._should_post_to_linkedin(post):
+                    # Format content for LinkedIn's professional audience
+                    linkedin_content = self.linkedin_manager.format_content_for_linkedin(
+                        post.content,
+                        post.tags or []
+                    )
+                    linkedin_post_id = await self.linkedin_manager.post_to_linkedin(linkedin_content)
+
+                    if linkedin_post_id:
+                        self.logger.info(f"Posted to LinkedIn: {linkedin_post_id}")
+                    else:
+                        self.logger.warning("Failed to post to LinkedIn")
 
                 if tweet_id:
                     published_time = datetime.now()
 
-                    # Update post status in Notion
+                    # Update post status in Notion with both platform IDs
                     success = self.notion_manager.mark_as_published(
                         post.id,  # Use post.id instead of post.notion_id
                         tweet_id,
-                        published_time
+                        published_time,
+                        linkedin_post_id=linkedin_post_id
                     )
 
                     if success:
-                        self.logger.info(f"Successfully posted and updated: {tweet_id}")
+                        platforms = "Twitter"
+                        if linkedin_post_id:
+                            platforms += " and LinkedIn"
+                        self.logger.info(f"Successfully posted to {platforms}: {tweet_id}")
                         self.daily_post_count += 1
                     else:
                         self.logger.error(f"Posted tweet {tweet_id} but failed to update Notion")
@@ -460,6 +498,32 @@ class SocialMediaManager:
 
             except Exception as e:
                 self.logger.error(f"Error posting scheduled content: {e}")
+
+    def _should_post_to_linkedin(self, post: SocialMediaPost) -> bool:
+        """Determine if a post should also be shared on LinkedIn"""
+
+        # LinkedIn is better for:
+        # - Business insights and case studies
+        # - Professional content
+        # - B2B focused posts
+        # - Data-driven content
+
+        business_keywords = [
+            'business', 'restaurant', 'analytics', 'data', 'revenue', 'profit',
+            'efficiency', 'optimization', 'management', 'strategy', 'growth',
+            'menuflow', 'pos', 'technology', 'automation', 'insights'
+        ]
+
+        content_lower = post.content.lower()
+
+        # Check if content contains business-relevant keywords
+        has_business_content = any(keyword in content_lower for keyword in business_keywords)
+
+        # Check if it's a case study or data-focused theme
+        is_business_theme = post.content_theme in ['case_wednesday', 'data_monday', 'tech_thursday']
+
+        # Post to LinkedIn if it's business-focused content
+        return has_business_content or is_business_theme
 
     async def _process_engagement_opportunities(self):
         """Find and process engagement opportunities"""

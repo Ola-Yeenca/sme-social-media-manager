@@ -46,6 +46,10 @@ class Settings:
         self.twitter_access_token = os.getenv("TWITTER_ACCESS_TOKEN", "your_twitter_access_token_here")
         self.twitter_access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET", "your_twitter_access_token_secret_here")
         self.twitter_bearer_token = os.getenv("TWITTER_BEARER_TOKEN", "your_twitter_bearer_token_here")
+
+        # LinkedIn API (optional)
+        self.linkedin_access_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
+        self.linkedin_organization_id = os.getenv("LINKEDIN_ORGANIZATION_ID")
         
         # AI Provider Keys
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "your_openai_api_key_here")
