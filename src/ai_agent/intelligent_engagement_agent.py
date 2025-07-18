@@ -79,7 +79,7 @@ class IntelligentEngagementAgent:
             "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
             "perplexity_api_key": os.getenv("PERPLEXITY_API_KEY", ""),
             "grok_api_key": os.getenv("GROK_API_KEY", ""),
-            "google_gemini_api_key": os.getenv("GOOGLE_GEMINI_API_KEY", "AIzaSyChtpXZLiYpDFnY7fyMqWZ7S_Rp396QL60")
+            "google_gemini_api_key": os.getenv("GOOGLE_GEMINI_API_KEY", "")
         }
         self.ai_provider = AIProviderManager(ai_config)
 

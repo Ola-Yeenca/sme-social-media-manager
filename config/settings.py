@@ -57,7 +57,7 @@ class Settings:
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "your_anthropic_api_key_here")
         self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
         self.grok_api_key = os.getenv("GROK_API_KEY")
-        self.google_gemini_api_key = os.getenv("GOOGLE_GEMINI_API_KEY", "AIzaSyChtpXZLiYpDFnY7fyMqWZ7S_Rp396QL60")
+        self.google_gemini_api_key = os.getenv("GOOGLE_GEMINI_API_KEY", "")
         
         # Content Configuration
         self.posting_schedule = int(os.getenv("POSTING_SCHEDULE", "3"))
