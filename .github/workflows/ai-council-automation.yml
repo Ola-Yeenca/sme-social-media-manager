@@ -4,8 +4,8 @@ on:
   schedule:
     # Run every 4 hours for content creation and posting
     - cron: '0 */4 * * *'
-    # Run every hour for engagement monitoring
-    - cron: '0 * * * *'
+    # Run AI Agent every 2 hours for continuous engagement monitoring
+    - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
       mode:

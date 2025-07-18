@@ -1,0 +1,106 @@
+name: 🤖 AI Agent Continuous Monitoring (RESPONDS TO @MENTIONS)
+
+on:
+  schedule:
+    # Run AI Agent every hour for continuous mention monitoring
+    - cron: '0 * * * *'
+    # Run every 30 minutes during business hours (8 AM - 8 PM Madrid time)
+    - cron: '*/30 7-19 * * *'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Monitoring Duration (minutes)'
+        required: true
+        default: '60'
+        type: choice
+        options:
+          - '30'
+          - '60'
+          - '120'
+          - '300'
+
+jobs:
+  ai-agent-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max
+    
+    steps:
+    - name: 🚀 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 🤖 Run AI Agent Continuous Monitoring
+      env:
+        # Twitter/X API Credentials
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        
+        # AI Provider API Keys
+        GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        
+        # Notion Configuration
+        NOTION_TOKEN: ${{ secrets.NOTION_API_KEY }}
+        NOTION_DATABASE_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
+        
+        # Monitoring Configuration
+        MONITORING_DURATION: ${{ github.event.inputs.duration || '60' }}
+        LOG_LEVEL: "INFO"
+        
+      run: |
+        echo "🤖 Starting AI Agent for @mention monitoring..."
+        echo "⏱️  Duration: ${MONITORING_DURATION} minutes"
+        echo "🎯 Will respond to @smeanalytica mentions automatically"
+        
+        # Create logs directory
+        mkdir -p logs
+        mkdir -p automation_logs
+        
+        # Run AI Agent with timeout
+        timeout ${MONITORING_DURATION}m python main.py --mode=ai_agent || {
+          echo "⏰ AI Agent completed monitoring session"
+          echo "✅ Ready for next monitoring cycle"
+        }
+        
+    - name: 📊 Upload Monitoring Logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ai-agent-monitoring-${{ github.run_number }}
+        path: |
+          logs/
+          automation_logs/
+        retention-days: 3
+        
+    - name: 📈 Report Monitoring Status
+      if: always()
+      run: |
+        echo "🎉 AI Agent monitoring session completed!"
+        echo "📊 Check artifacts for detailed engagement logs"
+        
+        # Show recent log entries if available
+        if [ -f "logs/social_manager.log" ]; then
+          echo "📝 Recent monitoring activity:"
+          tail -10 logs/social_manager.log || echo "No recent logs found"
+        fi
+        
+        echo ""
+        echo "🤖 AI Agent Status:"
+        echo "✅ Monitoring @smeanalytica mentions"
+        echo "✅ Responding to engagement opportunities"
+        echo "✅ Next monitoring cycle starts automatically"
+        echo ""
+        echo "💡 Test it: Tweet @smeanalytica and get an AI response!"
