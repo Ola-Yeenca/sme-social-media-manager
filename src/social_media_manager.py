@@ -379,7 +379,7 @@ class SocialMediaManager:
                 scheduled_time=schedule_time,
                 language=language.value,
                 content_theme=theme.value,
-                ai_provider_used=generated_content.provider if hasattr(generated_content, 'provider') else None,
+                ai_provider_used=generated_content.provider if hasattr(generated_content, 'provider') else None, # type: ignore
                 tags=sme_context.HASHTAGS["primary"][:5]  # Limit to 5 tags
             )
 
