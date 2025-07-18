@@ -69,8 +69,8 @@ jobs:
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         
         # Notion Configuration
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        NOTION_TOKEN: ${{ secrets.NOTION_API_KEY }}
+        NOTION_DATABASE_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
         LOCAL_BUSINESSES_DB_ID: ${{ secrets.LOCAL_BUSINESSES_DB_ID }}
         
         # Content Configuration
@@ -145,7 +145,7 @@ jobs:
   # Separate job for engagement monitoring (runs more frequently)
   engagement-monitor:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 * * * *' || github.event.inputs.mode == 'ai_agent'
+    if: github.event.inputs.mode == 'ai_agent' || github.event.inputs.mode == 'engagement_only'
     
     steps:
     - name: 🚀 Checkout Repository
@@ -174,12 +174,12 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        NOTION_TOKEN: ${{ secrets.NOTION_API_KEY }}
+        NOTION_DATABASE_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
         
       run: |
         echo "🎯 Running AI Agent Engagement Monitoring..."
-        python main.py --mode=ai_agent --engagement-only
+        python main.py --mode=engagement
         
     - name: 📊 Upload Engagement Logs
       uses: actions/upload-artifact@v3
