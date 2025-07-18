@@ -218,9 +218,8 @@ class TwitterManager:
             if exclude_retweets:
                 search_query += " -is:retweet"
             
-            # Add language and engagement filters
-            search_query += " lang:en OR lang:es"
-            search_query += " min_faves:5"  # Minimum engagement
+            # Add language filter (remove min_faves as it requires premium access)
+            search_query += " lang:en"
             
             tweets = tweepy.Paginator(
                 self.client.search_recent_tweets,
@@ -270,9 +269,9 @@ class TwitterManager:
                 'expansions': ['author_id']
             }
 
-            # Add time filter if provided
+            # Add time filter if provided (RFC3339 format)
             if since_time:
-                params['start_time'] = since_time.isoformat()
+                params['start_time'] = since_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
             mentions = self.client.get_users_mentions(**params)
 

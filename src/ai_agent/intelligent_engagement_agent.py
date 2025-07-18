@@ -69,11 +69,25 @@ class IntelligentEngagementAgent:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.twitter_manager = TwitterManager()
+
+        # Initialize Twitter manager with credentials
+        import os
+        twitter_credentials = {
+            "api_key": os.getenv("TWITTER_API_KEY"),
+            "api_secret": os.getenv("TWITTER_API_SECRET"),
+            "access_token": os.getenv("TWITTER_ACCESS_TOKEN"),
+            "access_token_secret": os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
+            "bearer_token": os.getenv("TWITTER_BEARER_TOKEN")
+        }
+
+        # Validate Twitter credentials
+        if not all(twitter_credentials.values()):
+            raise ValueError("Missing Twitter API credentials. Please check your environment variables.")
+
+        self.twitter_manager = TwitterManager(twitter_credentials)
         self.notion_manager = NotionManager()
 
         # Initialize AI provider manager with Gemini support
-        import os
         ai_config = {
             "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
             "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
