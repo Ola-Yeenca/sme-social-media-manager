@@ -30,7 +30,8 @@ async def demo_ai_grok_questions():
             "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
             "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
             "perplexity_api_key": os.getenv("PERPLEXITY_API_KEY", ""),
-            "grok_api_key": os.getenv("GROK_API_KEY", "")
+            "grok_api_key": os.getenv("GROK_API_KEY", ""),
+            "google_gemini_api_key": os.getenv("GOOGLE_GEMINI_API_KEY", "AIzaSyChtpXZLiYpDFnY7fyMqWZ7S_Rp396QL60")
         }
         
         ai_manager = AIProviderManager(ai_config)

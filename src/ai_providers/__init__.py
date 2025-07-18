@@ -7,6 +7,7 @@ from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
 from .perplexity_provider import PerplexityProvider
 from .grok_provider import GrokProvider, MockGrokProvider
+from .gemini_provider import GeminiProvider
 from .provider_manager import AIProviderManager, ProviderStrategy
 
 __all__ = [
@@ -18,10 +19,11 @@ __all__ = [
     "RateLimitError", 
     "APIError",
     "OpenAIProvider",
-    "AnthropicProvider", 
+    "AnthropicProvider",
     "PerplexityProvider",
     "GrokProvider",
     "MockGrokProvider",
+    "GeminiProvider",
     "AIProviderManager",
     "ProviderStrategy"
 ]

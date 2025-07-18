@@ -648,6 +648,188 @@ async def run_analytics_only() -> Dict[str, Any]:
         logger.error(f"❌ Analytics failed: {e}")
         return {"mode": "analytics", "errors": [str(e)]}
 
+async def run_ai_agent() -> Dict[str, Any]:
+    """Run intelligent AI engagement agent"""
+
+    logger = logging.getLogger(__name__)
+    logger.info("🤖 Starting Intelligent AI Engagement Agent")
+
+    results = {
+        "mode": "ai_agent",
+        "systems_active": ["ai_agent", "hashtag_tracker", "response_generator", "strategy_engine"],
+        "opportunities_found": 0,
+        "responses_generated": 0,
+        "engagements_executed": 0,
+        "agent_runtime": "",
+        "errors": []
+    }
+
+    try:
+        from src.ai_agent.intelligent_engagement_agent import create_intelligent_agent
+
+        # Create and start the AI agent
+        agent = await create_intelligent_agent()
+
+        logger.info("🚀 AI Agent initialized successfully")
+        logger.info("🔍 Starting continuous monitoring...")
+
+        # Start monitoring (this will run continuously)
+        await agent.start_monitoring()
+
+        # Get final statistics
+        final_stats = await agent.stop_monitoring()
+
+        # Update results
+        results.update({
+            "opportunities_found": final_stats.get("total_opportunities", 0),
+            "responses_generated": final_stats.get("total_responses", 0),
+            "engagements_executed": final_stats.get("total_engagements", 0),
+            "agent_runtime": final_stats.get("session_duration", ""),
+            "success_rate": final_stats.get("success_rate", 0)
+        })
+
+        logger.info(f"✅ AI Agent completed: {results}")
+
+        return results
+
+    except KeyboardInterrupt:
+        logger.info("🛑 AI Agent stopped by user")
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ AI Agent failed: {e}")
+        results["errors"].append(f"ai_agent: {e}")
+        return results
+
+async def run_ai_council_mode() -> Dict[str, Any]:
+    """Run AI Council collaborative content creation mode"""
+
+    logger = logging.getLogger(__name__)
+    logger.info("🤝 Starting AI Council Collaborative Content Creation")
+
+    results = {
+        "mode": "ai_council",
+        "systems_active": ["ai_council", "collaborative_generator", "gemini", "anthropic", "openai"],
+        "content_created": 0,
+        "council_decisions": 0,
+        "approval_rate": 0.0,
+        "collaboration_success_rate": 0.0,
+        "errors": []
+    }
+
+    try:
+        from src.content.collaborative_content_generator import CollaborativeContentGenerator, ContentCategory
+        from src.ai_providers import AIProviderManager
+        from src.notion.notion_manager import NotionManager
+
+        # Initialize AI providers
+        ai_config = {
+            "google_gemini_api_key": os.getenv("GOOGLE_GEMINI_API_KEY"),
+            "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY"),
+            "openai_api_key": os.getenv("OPENAI_API_KEY"),
+            "perplexity_api_key": os.getenv("PERPLEXITY_API_KEY"),
+            "grok_api_key": os.getenv("GROK_API_KEY")
+        }
+        ai_provider = AIProviderManager(ai_config)
+
+        # Initialize Notion manager
+        notion_manager = NotionManager()
+
+        # Initialize collaborative content generator
+        content_generator = CollaborativeContentGenerator(ai_provider, notion_manager)
+
+        logger.info("🚀 AI Council initialized successfully")
+        logger.info("📝 Starting collaborative content creation...")
+
+        # Generate content for different categories
+        content_categories = [
+            ContentCategory.THOUGHT_LEADERSHIP,
+            ContentCategory.DATA_INSIGHTS,
+            ContentCategory.SUCCESS_STORIES,
+            ContentCategory.VIRAL_HOOKS,
+            ContentCategory.EDUCATIONAL
+        ]
+
+        created_content = []
+
+        for category in content_categories:
+            try:
+                logger.info(f"🎯 Creating {category.value} content...")
+
+                collaborative_content = await content_generator.generate_collaborative_content(category)
+                created_content.append(collaborative_content)
+
+                logger.info(
+                    f"✅ {category.value} content created: "
+                    f"Score {collaborative_content.final_score:.1f}/10, "
+                    f"Decision: {collaborative_content.council_decision.final_decision.value}"
+                )
+
+                # Brief pause between content generation
+                await asyncio.sleep(3)
+
+            except Exception as e:
+                logger.error(f"❌ Failed to create {category.value} content: {e}")
+                results["errors"].append(f"{category.value}: {e}")
+
+        # Generate a content campaign
+        logger.info("🚀 Creating collaborative content campaign...")
+        try:
+            campaign_content = await content_generator.generate_content_campaign(
+                campaign_theme="restaurant_ai_revolution",
+                num_posts=3
+            )
+            created_content.extend(campaign_content)
+            logger.info(f"📈 Campaign created: {len(campaign_content)} posts")
+        except Exception as e:
+            logger.error(f"❌ Campaign creation failed: {e}")
+            results["errors"].append(f"campaign: {e}")
+
+        # Get collaboration statistics
+        collaboration_stats = content_generator.get_collaboration_stats()
+
+        # Update results
+        results.update({
+            "content_created": len(created_content),
+            "council_decisions": collaboration_stats["total_content_created"],
+            "approval_rate": collaboration_stats["council_approval_rate"],
+            "collaboration_success_rate": collaboration_stats["collaboration_success_rate"],
+            "unanimous_decision_rate": collaboration_stats["unanimous_decision_rate"],
+            "average_content_score": collaboration_stats["average_content_score"],
+            "content_by_category": collaboration_stats["content_by_category"]
+        })
+
+        # Get ready-to-post content
+        ready_content = await content_generator.get_ready_to_post_content(min_score=7.0)
+
+        logger.info(f"📊 AI Council Session Summary:")
+        logger.info(f"   Content Created: {len(created_content)}")
+        logger.info(f"   Council Approval Rate: {collaboration_stats['council_approval_rate']:.1f}%")
+        logger.info(f"   Collaboration Success Rate: {collaboration_stats['collaboration_success_rate']:.1f}%")
+        logger.info(f"   Average Content Score: {collaboration_stats['average_content_score']:.1f}/10")
+        logger.info(f"   Ready to Post: {len(ready_content)} pieces")
+
+        # Display ready content
+        if ready_content:
+            logger.info("🎯 Top Content Ready for Posting:")
+            for i, content in enumerate(ready_content[:3], 1):
+                logger.info(f"   {i}. {content.category.value}: {content.content[:60]}...")
+                logger.info(f"      Score: {content.final_score:.1f}/10, Priority: {content.posting_priority}")
+
+        logger.info("✅ AI Council collaborative content creation completed!")
+
+        return results
+
+    except ImportError as e:
+        logger.error(f"❌ Import error: {e}")
+        results["errors"].append(f"import: {e}")
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ AI Council mode failed: {e}")
+        results["errors"].append(f"ai_council: {e}")
+        return results
+
 def print_status():
     """Print current system status"""
     
@@ -711,6 +893,8 @@ Examples:
   python main.py --mode=basic           # Run basic automation (fallback)
   python main.py --mode=content         # Generate content only
   python main.py --mode=engagement      # Run engagement automation (likes, retweets, comments)
+  python main.py --mode=ai_agent        # Run intelligent AI engagement agent (continuous monitoring)
+  python main.py --mode=ai_council      # Run AI Council collaborative content creation
   python main.py --mode=analytics       # Run analytics only
   python main.py --status               # Show system status
         """
@@ -718,7 +902,7 @@ Examples:
     
     parser.add_argument(
         '--mode',
-        choices=['enhanced', 'basic', 'content', 'analytics', 'engagement'],
+        choices=['enhanced', 'basic', 'content', 'analytics', 'engagement', 'ai_agent', 'ai_council'],
         default='enhanced',
         help='Operation mode (default: enhanced)'
     )
@@ -765,6 +949,10 @@ Examples:
             results = await run_content_only()
         elif args.mode == 'engagement':
             results = await run_engagement_automation()
+        elif args.mode == 'ai_agent':
+            results = await run_ai_agent()
+        elif args.mode == 'ai_council':
+            results = await run_ai_council_mode()
         elif args.mode == 'analytics':
             results = await run_analytics_only()
         

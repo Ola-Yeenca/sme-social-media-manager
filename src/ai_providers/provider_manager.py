@@ -11,6 +11,7 @@ from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
 from .perplexity_provider import PerplexityProvider
 from .grok_provider import GrokProvider, MockGrokProvider
+from .gemini_provider import GeminiProvider
 
 class ProviderStrategy(str, Enum):
     ROUND_ROBIN = "round_robin"
@@ -29,13 +30,15 @@ class AIProviderManager:
         # Initialize providers based on available API keys
         self._initialize_providers(config)
         
-        # Content type to provider mapping
+        # Content type to provider mapping (Gemini prioritized for intelligent content)
         self.content_preferences = {
-            "analytical": ["anthropic", "openai", "perplexity"],
-            "creative": ["openai", "grok", "anthropic"],
-            "trending": ["grok", "perplexity", "openai"],
-            "industry_insight": ["perplexity", "anthropic", "openai"],
-            "engagement": ["grok", "openai", "anthropic"]
+            "analytical": ["gemini", "anthropic", "openai", "perplexity"],
+            "creative": ["gemini", "openai", "grok", "anthropic"],
+            "trending": ["gemini", "grok", "perplexity", "openai"],
+            "industry_insight": ["gemini", "perplexity", "anthropic", "openai"],
+            "engagement": ["gemini", "grok", "openai", "anthropic"],
+            "influencer": ["gemini", "anthropic", "openai"],
+            "strategic": ["gemini", "anthropic", "perplexity"]
         }
     
     def _initialize_providers(self, config: Dict[str, str]):
@@ -55,6 +58,11 @@ class AIProviderManager:
         if config.get("perplexity_api_key"):
             self.providers["perplexity"] = PerplexityProvider(config["perplexity_api_key"])
             self.provider_order.append("perplexity")
+
+        # Google Gemini (for intelligent social media content)
+        if config.get("google_gemini_api_key"):
+            self.providers["gemini"] = GeminiProvider(config["google_gemini_api_key"])
+            self.provider_order.insert(0, "gemini")  # Prioritize Gemini
         
         # Grok or Mock Grok
         if config.get("grok_api_key"):
@@ -225,7 +233,65 @@ class AIProviderManager:
                     continue
         
         raise AIProviderError("All providers failed to generate reply")
-    
+
+    async def generate_influencer_content(self, request: ContentRequest) -> GeneratedContent:
+        """Generate content optimized for social media influence using Gemini"""
+
+        # Prioritize Gemini for influencer content
+        if "gemini" in self.providers and self.providers["gemini"].is_available:
+            try:
+                gemini_provider = self.providers["gemini"]
+                if hasattr(gemini_provider, 'generate_influencer_content'):
+                    return await gemini_provider.generate_influencer_content(request)
+                else:
+                    return await gemini_provider.generate_content(request)
+            except AIProviderError as e:
+                print(f"Gemini influencer content generation failed: {e}")
+
+        # Fallback to other providers for influencer content
+        for provider_name in self.content_preferences.get("influencer", self.provider_order):
+            if provider_name in self.providers and self.providers[provider_name].is_available:
+                try:
+                    return await self.providers[provider_name].generate_content(request)
+                except AIProviderError as e:
+                    print(f"Influencer content generation failed for {provider_name}: {e}")
+                    continue
+
+        raise AIProviderError("All providers failed to generate influencer content")
+
+    async def analyze_engagement_with_gemini(self, tweet_text: str, author: str) -> Dict[str, Any]:
+        """Use Gemini's advanced reasoning for engagement analysis"""
+
+        if "gemini" in self.providers and self.providers["gemini"].is_available:
+            try:
+                return await self.providers["gemini"].analyze_engagement_opportunity(tweet_text, author)
+            except AIProviderError as e:
+                print(f"Gemini engagement analysis failed: {e}")
+
+        # Fallback to other providers
+        for provider_name in ["anthropic", "openai", "perplexity"]:
+            if provider_name in self.providers and self.providers[provider_name].is_available:
+                try:
+                    return await self.providers[provider_name].analyze_engagement_opportunity(tweet_text, author)
+                except AIProviderError as e:
+                    print(f"Engagement analysis failed for {provider_name}: {e}")
+                    continue
+
+        # Return basic analysis if all providers fail
+        return {
+            "relevance_score": 5,
+            "engagement_potential": 5,
+            "conversion_likelihood": 3,
+            "brand_alignment": 5,
+            "urgency_level": 5,
+            "recommended_action": "ignore",
+            "response_strategy": "brand_awareness",
+            "key_talking_points": ["general industry insight"],
+            "potential_risks": ["provider unavailable"],
+            "optimal_timing": "not_urgent",
+            "reasoning": "All AI providers unavailable for analysis"
+        }
+
     def get_provider_status(self) -> Dict[str, Dict[str, Any]]:
         """Get status of all providers"""
         

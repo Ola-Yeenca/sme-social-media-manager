@@ -12,17 +12,26 @@ class ContentType(str, Enum):
     REPLY = "reply"
     THREAD = "thread"
     RETWEET_COMMENT = "retweet_comment"
+    SOCIAL_MEDIA_POST = "social_media_post"
+    ANALYSIS = "analysis"
+    CONTENT_EVALUATION = "content_evaluation"
+    ENGAGEMENT_ANALYSIS = "engagement_analysis"
 
 @dataclass
 class ContentRequest:
     """Standardized content generation request"""
     content_type: ContentType
-    language: str
-    theme: str
-    context: Dict[str, Any]
+    language: str = "en"
+    theme: str = ""
+    context: Dict[str, Any] = None
     max_length: int = 1000  # Flexible length for Twitter subscription and LinkedIn
     hashtags: Optional[List[str]] = None
     tone: str = "conversational_expert"
+    platform: str = "twitter"
+
+    def __post_init__(self):
+        if self.context is None:
+            self.context = {}
 
 @dataclass
 class GeneratedContent:

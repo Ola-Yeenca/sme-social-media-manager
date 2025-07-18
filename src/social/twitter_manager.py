@@ -257,27 +257,34 @@ class TwitterManager:
             self.logger.error(f"Error searching tweets: {e}")
             return []
     
-    async def get_mentions(self, max_results: int = 20) -> List[Tweet]:
-        """Get recent mentions of SME Analytica"""
-        
+    async def get_mentions(self, max_results: int = 20, since_time: Optional[datetime] = None) -> List[Tweet]:
+        """Get recent mentions of SME Analytica with optional time filtering"""
+
         try:
-            mentions = self.client.get_users_mentions(
-                id=self.client.get_me().data.id,
-                max_results=max_results,
-                tweet_fields=['author_id', 'created_at', 'public_metrics', 'context_annotations'],
-                user_fields=['username', 'name', 'description'],
-                expansions=['author_id']
-            )
-            
+            # Build parameters for mentions request
+            params = {
+                'id': self.client.get_me().data.id,
+                'max_results': max_results,
+                'tweet_fields': ['author_id', 'created_at', 'public_metrics', 'context_annotations', 'in_reply_to_user_id'],
+                'user_fields': ['username', 'name', 'description', 'public_metrics'],
+                'expansions': ['author_id']
+            }
+
+            # Add time filter if provided
+            if since_time:
+                params['start_time'] = since_time.isoformat()
+
+            mentions = self.client.get_users_mentions(**params)
+
             mention_objects = []
             if mentions.data:
                 for mention in mentions.data:
                     # Find author info
                     author_info = None
                     if mentions.includes and 'users' in mentions.includes:
-                        author_info = next((user for user in mentions.includes['users'] 
+                        author_info = next((user for user in mentions.includes['users']
                                           if user.id == mention.author_id), None)
-                    
+
                     mention_obj = Tweet(
                         id=mention.id,
                         text=mention.text,
@@ -288,12 +295,177 @@ class TwitterManager:
                         context_annotations=getattr(mention, 'context_annotations', None)
                     )
                     mention_objects.append(mention_obj)
-            
+
             return mention_objects
-            
+
         except Exception as e:
             self.logger.error(f"Error getting mentions: {e}")
             return []
+
+    async def get_notifications(self, since_time: Optional[datetime] = None, max_results: int = 50) -> List[Dict[str, Any]]:
+        """Get comprehensive notifications including mentions, replies, and interactions"""
+
+        try:
+            notifications = []
+
+            # Get mentions
+            mentions = await self.get_mentions(max_results=max_results//2, since_time=since_time)
+            for mention in mentions:
+                notifications.append({
+                    'type': 'mention',
+                    'tweet': mention,
+                    'timestamp': mention.created_at,
+                    'author': mention.author_username,
+                    'content': mention.text
+                })
+
+            # Get replies to our tweets (search for replies)
+            if since_time:
+                time_filter = f" since:{since_time.strftime('%Y-%m-%d')}"
+            else:
+                time_filter = ""
+
+            # Search for replies to our account
+            reply_query = f"to:smeanalytica{time_filter}"
+            reply_tweets = await self.search_tweets(reply_query, max_results=max_results//2)
+
+            for reply in reply_tweets:
+                notifications.append({
+                    'type': 'reply',
+                    'tweet': reply,
+                    'timestamp': reply.created_at,
+                    'author': reply.author_username,
+                    'content': reply.text
+                })
+
+            # Sort by timestamp (newest first)
+            notifications.sort(key=lambda x: x['timestamp'], reverse=True)
+
+            return notifications[:max_results]
+
+        except Exception as e:
+            self.logger.error(f"Error getting notifications: {e}")
+            return []
+
+    async def retweet(self, tweet_id: str) -> bool:
+        """Retweet a specific tweet"""
+        try:
+            response = self.client.retweet(tweet_id)
+            if response.data:
+                self.logger.info(f"Successfully retweeted: {tweet_id}")
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error retweeting {tweet_id}: {e}")
+            return False
+
+    async def like_tweet(self, tweet_id: str) -> bool:
+        """Like a specific tweet"""
+        try:
+            response = self.client.like(tweet_id)
+            if response.data:
+                self.logger.info(f"Successfully liked: {tweet_id}")
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Error liking {tweet_id}: {e}")
+            return False
+
+    async def reply_to_tweet(self, tweet_id: str, content: str) -> Optional[str]:
+        """Reply to a specific tweet"""
+        return await self.post_tweet(content=content, reply_to_tweet_id=tweet_id)
+
+    async def get_conversation_thread(self, tweet_id: str, max_depth: int = 5) -> List[Dict[str, Any]]:
+        """Get conversation thread for a tweet"""
+        try:
+            thread = []
+            current_id = tweet_id
+
+            for _ in range(max_depth):
+                tweet = self.client.get_tweet(
+                    current_id,
+                    tweet_fields=['author_id', 'created_at', 'in_reply_to_user_id', 'conversation_id'],
+                    user_fields=['username', 'name'],
+                    expansions=['author_id']
+                )
+
+                if tweet.data:
+                    author_info = None
+                    if tweet.includes and 'users' in tweet.includes:
+                        author_info = tweet.includes['users'][0]
+
+                    thread.append({
+                        'id': tweet.data.id,
+                        'text': tweet.data.text,
+                        'author': author_info.username if author_info else 'unknown',
+                        'created_at': tweet.data.created_at,
+                        'in_reply_to_user_id': getattr(tweet.data, 'in_reply_to_user_id', None)
+                    })
+
+                    # Get the tweet this is replying to
+                    if hasattr(tweet.data, 'in_reply_to_user_id'):
+                        # This would require additional API calls to get the parent tweet
+                        # For now, we'll stop here
+                        break
+                else:
+                    break
+
+            return thread
+
+        except Exception as e:
+            self.logger.error(f"Error getting conversation thread for {tweet_id}: {e}")
+            return []
+
+    async def get_user_profile(self, username: str) -> Dict[str, Any]:
+        """Get detailed user profile information"""
+        try:
+            user = self.client.get_user(
+                username=username,
+                user_fields=['public_metrics', 'description', 'created_at', 'verified', 'location']
+            )
+
+            if user.data:
+                return {
+                    'username': user.data.username,
+                    'name': user.data.name,
+                    'description': user.data.description,
+                    'followers': user.data.public_metrics['followers_count'],
+                    'following': user.data.public_metrics['following_count'],
+                    'tweet_count': user.data.public_metrics['tweet_count'],
+                    'verified': getattr(user.data, 'verified', False),
+                    'created_at': user.data.created_at,
+                    'location': getattr(user.data, 'location', None),
+                    'account_type': self._classify_account_type(user.data)
+                }
+
+            return {}
+
+        except Exception as e:
+            self.logger.error(f"Error getting user profile for {username}: {e}")
+            return {}
+
+    def _classify_account_type(self, user_data) -> str:
+        """Classify account type based on profile data"""
+        description = getattr(user_data, 'description', '').lower()
+        followers = user_data.public_metrics['followers_count']
+
+        # Business indicators
+        business_keywords = ['restaurant', 'hotel', 'business', 'owner', 'ceo', 'founder', 'manager']
+        if any(keyword in description for keyword in business_keywords):
+            return 'business'
+
+        # Influencer indicators
+        if followers > 10000:
+            return 'influencer'
+        elif followers > 1000:
+            return 'micro_influencer'
+
+        # Tech/industry indicators
+        tech_keywords = ['tech', 'developer', 'analytics', 'data', 'ai', 'software']
+        if any(keyword in description for keyword in tech_keywords):
+            return 'tech_professional'
+
+        return 'individual'
     
     async def get_trending_hashtags(self, location_id: int = 1) -> List[str]:
         """Get trending hashtags (using v1.1 API)"""

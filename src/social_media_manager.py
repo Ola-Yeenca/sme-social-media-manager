@@ -77,7 +77,8 @@ class SocialMediaManager:
             "openai_api_key": settings.openai_api_key,
             "anthropic_api_key": settings.anthropic_api_key,
             "perplexity_api_key": settings.perplexity_api_key,
-            "grok_api_key": settings.grok_api_key
+            "grok_api_key": settings.grok_api_key,
+            "google_gemini_api_key": settings.google_gemini_api_key
         }
         
         return AIProviderManager(config)
