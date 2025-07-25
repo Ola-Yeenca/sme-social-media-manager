@@ -1,0 +1,17 @@
+[Unit]
+Description=SME Analytica Autonomous Social Media Agent
+After=network.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/path/to/sme_social_manager
+ExecStart=/usr/bin/python3 agent_cli.py start
+ExecStop=/usr/bin/python3 agent_cli.py stop
+Restart=always
+RestartSec=10
+Environment=PATH=/usr/bin:/usr/local/bin
+EnvironmentFile=/path/to/sme_social_manager/.env
+
+[Install]
+WantedBy=multi-user.target
