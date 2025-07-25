@@ -1,4 +1,4 @@
-name: 🚀 SME Analytica MAIN Social Media Manager (POSTS TO TWITTER/LINKEDIN)
+name: 🚀 SME Analytica Social Media Automation (Production Ready)
 
 # Prevent multiple posting workflows from running simultaneously
 concurrency:
@@ -35,9 +35,16 @@ on:
         - engagement
         - analytics
 
+env:
+  # Default timeout values
+  PYTHON_VERSION: '3.11'
+  PIP_CACHE_VERSION: 'v1'
+  MAX_EXECUTION_TIME: 900  # 15 minutes
+
 jobs:
   social-media-automation:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     
     steps:
     - name: Checkout repository
@@ -46,21 +53,47 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ env.PIP_CACHE_VERSION }}-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PIP_CACHE_VERSION }}-
+          ${{ runner.os }}-pip-
+    
     - name: Install dependencies
+      timeout-minutes: 5
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
     - name: Create required directories
       run: |
-        mkdir -p logs
-        mkdir -p analytics_data
-        mkdir -p automation_logs
+        mkdir -p logs analytics_data automation_logs
+        chmod 755 logs analytics_data automation_logs
+        
+    - name: Validate environment
+      run: |
+        python -c "
+        import os
+        required_vars = [
+          'TWITTER_API_KEY', 'TWITTER_API_SECRET', 'TWITTER_ACCESS_TOKEN',
+          'TWITTER_ACCESS_TOKEN_SECRET', 'TWITTER_BEARER_TOKEN',
+          'NOTION_API_KEY', 'SOCIAL_MEDIA_DB_ID'
+        ]
+        missing = [var for var in required_vars if not os.getenv(var)]
+        if missing:
+          print(f'Missing required environment variables: {missing}')
+          exit(1)
+        print('Environment validation passed')
+        "
     
     - name: Run Social Media Automation
+      timeout-minutes: 15
       env:
         # Twitter API credentials
         TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
@@ -79,36 +112,61 @@ jobs:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-
+        
         # LinkedIn credentials (optional)
         LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
         LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
         LINKEDIN_ORGANIZATION_ID: ${{ secrets.LINKEDIN_ORGANIZATION_ID }}
         LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
         LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+        
+        # Webhook for notifications (optional)
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       run: |
+        echo "=== Starting automation run ==="
+        echo "Mode: $MODE"
+        echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "GitHub Run ID: ${{ github.run_id }}"
+        echo "GitHub Run Number: ${{ github.run_number }}"
+        echo "Madrid Time: $(TZ='Europe/Madrid' date '+%Y-%m-%d %H:%M %Z')"
+        
         # Determine mode
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           MODE="${{ github.event.inputs.mode }}"
         else
-          # For scheduled runs, use smart mode for intelligent posting + Grok engagement
           MODE="smart"
         fi
-
+        
         echo "Running automation in mode: $MODE"
-        echo "Posting time (Madrid): $(TZ='Europe/Madrid' date '+%Y-%m-%d %H:%M %Z')"
-        python main.py --mode=$MODE --quiet
+        
+        # Run with error handling
+        set -e
+        python main.py --mode=$MODE --quiet || {
+          echo "❌ Automation failed with exit code $?"
+          exit 1
+        }
+        
+        echo "✅ Automation completed successfully"
     
     - name: Upload logs as artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: automation-logs-${{ github.run_number }}
+        name: automation-logs-${{ github.run_number }}-${{ github.run_attempt }}
         path: |
           logs/
           analytics_data/
           automation_logs/
         retention-days: 30
+        compression-level: 6
+        
+    - name: Security scan logs
+      if: always()
+      run: |
+        # Basic security scan to avoid logging sensitive data
+        echo "🔍 Scanning for potential sensitive data in logs..."
+        find logs/ analytics_data/ automation_logs/ -type f -name "*.log" -exec grep -l -i "password\|secret\|key\|token" {} \; || echo "✅ No sensitive data found in logs"
     
     - name: Commit and push analytics data (if any)
       if: success()
@@ -119,8 +177,70 @@ jobs:
         # Only commit analytics data, not logs with sensitive info
         if [ -d "analytics_data" ] && [ "$(ls -A analytics_data)" ]; then
           git add analytics_data/
-          git diff --staged --quiet || git commit -m "📊 Update analytics data - $(date '+%Y-%m-%d %H:%M')"
+          git diff --staged --quiet || git commit -m "📊 Update analytics data - $(date '+%Y-%m-%d %H:%M')
+
+🤖 Automated update via GitHub Actions
+Run: ${{ github.run_number }}.${{ github.run_attempt }}
+Mode: ${{ github.event.inputs.mode || 'smart' }}
+"
           git push
+        else
+          echo "ℹ️ No analytics data to commit"
+        fi
+        
+    - name: Notify on failure
+      if: failure() && github.event_name == 'schedule'
+      run: |
+        echo "🚨 Scheduled automation failed!"
+        echo "Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        
+        # Optional webhook notification
+        if [ -n "${{ secrets.WEBHOOK_URL }}" ]; then
+          curl -X POST "${{ secrets.WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "🚨 SME Analytica automation failed! Run: ${{ github.run_number }}",
+              "run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "timestamp": "'$(date -u '+%Y-%m-%d %H:%M:%S UTC')'"
+            }' || echo "⚠️ Webhook notification failed"
+        fi
+        
+        # Slack webhook notification
+        if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "🚨 SME Analytica Social Media Automation Failed",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fields": [
+                    {
+                      "title": "Run Number",
+                      "value": "${{ github.run_number }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Mode",
+                      "value": "${{ github.event.inputs.mode || 'smart' }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Action URL",
+                      "value": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "short": false
+                    }
+                  ],
+                  "footer": "GitHub Actions",
+                  "ts": '$(date +%s)'
+                }
+              ]
+            }' || echo "⚠️ Slack notification failed"
         fi
 
   # Health check job to monitor automation
@@ -134,13 +254,35 @@ jobs:
       run: |
         if [ "${{ needs.social-media-automation.result }}" = "success" ]; then
           echo "✅ Social media automation completed successfully"
+          echo "Run details: ${{ github.run_number }}.${{ github.run_attempt }}"
+          echo "Mode: ${{ github.event.inputs.mode || 'smart' }}"
         else
           echo "❌ Social media automation failed"
+          echo "Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           exit 1
         fi
     
+    - name: Generate failure report
+      if: failure()
+      run: |
+        echo "🚨 AUTOMATION FAILURE REPORT 🚨"
+        echo "============================="
+        echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "Repository: ${{ github.repository }}"
+        echo "Run ID: ${{ github.run_id }}"
+        echo "Run Number: ${{ github.run_number }}"
+        echo "Trigger: ${{ github.event_name }}"
+        echo "Mode: ${{ github.event.inputs.mode || 'smart' }}"
+        echo ""
+        echo "Next Steps:"
+        echo "1. Check logs at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo "2. Test locally: python main.py --mode=${{ github.event.inputs.mode || 'smart' }}"
+        echo "3. Verify API keys and environment variables in GitHub Secrets"
+        echo "4. Check Twitter/LinkedIn API status pages"
+        echo "5. Review recent code changes"
+        
     - name: Notify on failure (optional)
       if: failure()
       run: |
         echo "🚨 Social media automation failed at $(date)"
-        # Add notification logic here (email, Slack, etc.) if needed
+        # Add notification logic here (email, Slack, Discord, etc.) if needed
