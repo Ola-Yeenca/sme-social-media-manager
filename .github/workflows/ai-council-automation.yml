@@ -1,11 +1,11 @@
 name: 📝 AI Council Content Creator (SAVES TO NOTION ONLY - NO POSTING)
 
 on:
-  schedule:
-    # Run every 4 hours for content creation and posting
-    - cron: '0 */4 * * *'
-    # Run AI Agent every 2 hours for continuous engagement monitoring
-    - cron: '0 */2 * * *'
+  # DISABLED SCHEDULED RUNS - This workflow only creates content, doesn't post
+  # Use social-media-automation.yml for actual posting
+  # schedule:
+  #   - cron: '0 */4 * * *'
+  #   - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
       mode:

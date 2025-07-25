@@ -18,12 +18,13 @@ on:
       mode:
         description: 'Automation mode'
         required: true
-        default: 'ai_council'
+        default: 'smart'
         type: choice
         options:
+        - enhanced
+        - smart
         - ai_council
         - ai_agent
-        - enhanced
         - basic
         - content
         - engagement
@@ -85,8 +86,8 @@ jobs:
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           MODE="${{ github.event.inputs.mode }}"
         else
-          # For scheduled runs, use AI Council for collaborative content creation
-          MODE="ai_council"
+          # For scheduled runs, use smart mode for intelligent posting + Grok engagement
+          MODE="smart"
         fi
 
         echo "Running automation in mode: $MODE"

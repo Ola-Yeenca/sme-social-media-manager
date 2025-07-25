@@ -344,7 +344,31 @@ async def run_enhanced_automation() -> Dict[str, Any]:
             logger.error(f"❌ LinkedIn posting failed: {e}")
             results["errors"].append(f"linkedin_posting: {e}")
 
-        # 4. Update analytics (simplified for cloud environment)
+        # 4. Run Grok engagement farming (intelligent timing)
+        logger.info("🤖 Running Grok engagement farming...")
+        try:
+            from src.engagement.engagement_automation import EngagementAutomation
+
+            # Initialize engagement automation for Grok farming
+            engagement_automation = EngagementAutomation(twitter, None)  # Twitter only for Grok
+
+            # Run Grok engagement farming
+            grok_results = await engagement_automation.grok_farmer.run_grok_engagement_farming()
+
+            if grok_results.get("questions_asked", 0) > 0:
+                results["grok_questions_asked"] = grok_results.get("questions_asked", 0)
+                results["grok_topics_covered"] = grok_results.get("topics_covered", [])
+                logger.info(f"✅ Grok engagement: {grok_results.get('questions_asked', 0)} questions asked")
+            else:
+                logger.info("ℹ️  No Grok questions asked (rate limiting or timing)")
+
+            results["systems_active"].append("grok_engagement")
+
+        except Exception as e:
+            logger.error(f"❌ Grok engagement failed: {e}")
+            results["errors"].append(f"grok_engagement: {e}")
+
+        # 5. Update analytics (simplified for cloud environment)
         logger.info("📊 Updating analytics...")
         try:
             # Ensure data directory exists
@@ -360,6 +384,8 @@ async def run_enhanced_automation() -> Dict[str, Any]:
                 "content_generated": results.get("content_generated", 0),
                 "posts_published": results.get("posts_published", 0),
                 "linkedin_published": results.get("linkedin_published", 0),
+                "grok_questions_asked": results.get("grok_questions_asked", 0),
+                "grok_topics_covered": results.get("grok_topics_covered", []),
                 "engagements_completed": results.get("engagements_completed", 0),
                 "systems_active": results.get("systems_active", [])
             }
@@ -439,6 +465,95 @@ async def run_basic_automation() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"❌ Basic automation failed: {e}")
         results["errors"].append(f"basic_automation: {e}")
+        return results
+
+async def run_smart_automation() -> Dict[str, Any]:
+    """
+    Smart automation that intelligently decides what to do based on time and context
+    - Content posting + Grok engagement in one workflow
+    - Intelligent timing for maximum engagement
+    """
+
+    logger = logging.getLogger(__name__)
+    logger.info("🧠 Running smart automation with intelligent decision making...")
+
+    from datetime import datetime
+    import random
+
+    # Get current time in Madrid timezone
+    madrid_hour = datetime.now().hour  # Simplified for demo
+
+    results = {
+        "mode": "smart",
+        "systems_active": ["smart_decision_engine"],
+        "content_generated": 0,
+        "posts_published": 0,
+        "linkedin_published": 0,
+        "grok_questions_asked": 0,
+        "grok_topics_covered": [],
+        "actions_taken": 0,
+        "smart_decisions": [],
+        "errors": []
+    }
+
+    try:
+        # Decision 1: Always generate and post content first
+        logger.info("🎯 Smart Decision 1: Generate and post content")
+        results["smart_decisions"].append("content_posting")
+
+        enhanced_results = await run_enhanced_automation()
+
+        # Merge enhanced results
+        results["content_generated"] = enhanced_results.get("content_generated", 0)
+        results["posts_published"] = enhanced_results.get("posts_published", 0)
+        results["linkedin_published"] = enhanced_results.get("linkedin_published", 0)
+        results["grok_questions_asked"] = enhanced_results.get("grok_questions_asked", 0)
+        results["grok_topics_covered"] = enhanced_results.get("grok_topics_covered", [])
+        results["systems_active"].extend(enhanced_results.get("systems_active", []))
+        results["errors"].extend(enhanced_results.get("errors", []))
+
+        # Decision 2: Intelligent additional engagement based on time and randomness
+        engagement_probability = 0.7  # 70% chance of additional engagement
+
+        if random.random() < engagement_probability:
+            logger.info("🎯 Smart Decision 2: Additional engagement activities")
+            results["smart_decisions"].append("additional_engagement")
+
+            # Run additional engagement (mentions, replies, etc.)
+            engagement_results = await run_engagement_automation()
+
+            # Merge engagement results (avoid double-counting Grok)
+            additional_actions = engagement_results.get("actions_taken", 0)
+            results["actions_taken"] += additional_actions
+            results["systems_active"].extend([s for s in engagement_results.get("systems_active", []) if s not in results["systems_active"]])
+            results["errors"].extend(engagement_results.get("errors", []))
+
+            logger.info(f"✅ Additional engagement: {additional_actions} actions taken")
+        else:
+            logger.info("🎯 Smart Decision 2: Skipping additional engagement (random timing)")
+            results["smart_decisions"].append("skip_additional_engagement")
+
+        # Decision 3: Time-based strategy logging
+        if 8 <= madrid_hour <= 12:
+            strategy = "morning_business_focus"
+        elif 12 <= madrid_hour <= 17:
+            strategy = "afternoon_professional_engagement"
+        elif 17 <= madrid_hour <= 22:
+            strategy = "evening_community_building"
+        else:
+            strategy = "night_minimal_activity"
+
+        results["time_strategy"] = strategy
+        results["madrid_hour"] = madrid_hour
+
+        logger.info(f"✅ Smart automation completed with strategy: {strategy}")
+        logger.info(f"📊 Results: {results['content_generated']} content, {results['posts_published']} tweets, {results['linkedin_published']} LinkedIn, {results['grok_questions_asked']} Grok questions")
+
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ Smart automation failed: {e}")
+        results["errors"].append(f"smart_automation: {e}")
         return results
 
 async def run_engagement_automation() -> Dict[str, Any]:
@@ -943,6 +1058,8 @@ Examples:
         # Run based on mode
         if args.mode == 'enhanced':
             results = await run_enhanced_automation()
+        elif args.mode == 'smart':
+            results = await run_smart_automation()
         elif args.mode == 'basic':
             results = await run_basic_automation()
         elif args.mode == 'content':
