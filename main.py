@@ -1017,7 +1017,7 @@ Examples:
     
     parser.add_argument(
         '--mode',
-        choices=['enhanced', 'basic', 'content', 'analytics', 'engagement', 'ai_agent', 'ai_council'],
+        choices=['enhanced', 'smart', 'basic', 'content', 'analytics', 'engagement', 'ai_agent', 'ai_council'],
         default='enhanced',
         help='Operation mode (default: enhanced)'
     )
