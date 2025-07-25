@@ -1,5 +1,10 @@
 name: 🚀 SME Analytica MAIN Social Media Manager (POSTS TO TWITTER/LINKEDIN)
 
+# Prevent multiple posting workflows from running simultaneously
+concurrency:
+  group: social-media-posting
+  cancel-in-progress: false
+
 on:
   schedule:
     # Optimal posting times for Madrid timezone (UTC times)

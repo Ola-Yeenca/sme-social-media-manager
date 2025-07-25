@@ -1,5 +1,10 @@
 name: 🤖 AI Agent Continuous Monitoring (RESPONDS TO @MENTIONS)
 
+# Prevent multiple AI agent instances from running simultaneously
+concurrency:
+  group: ai-agent-monitoring
+  cancel-in-progress: true
+
 on:
   schedule:
     # Run AI Agent every hour for continuous mention monitoring
@@ -22,7 +27,7 @@ on:
 jobs:
   ai-agent-monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours max
+    timeout-minutes: 15  # 15 minutes max (prevent queue blocking)
     
     steps:
     - name: 🚀 Checkout Repository
