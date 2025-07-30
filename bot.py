@@ -13,16 +13,23 @@ from typing import List, Dict, Optional
 
 import tweepy
 import openai
+import grok
 from config import Config
 
 
 class SMESocialBot:
     """Simple social media bot that actually works"""
     
-    def __init__(self):
+    def __init__(self, test_mode=False):
         """Initialize the bot with API connections"""
         self.config = Config()
-        self.setup_twitter()
+        self.test_mode = test_mode
+        
+        if not test_mode:
+            self.setup_twitter()
+        else:
+            print("🧪 Test mode - skipping Twitter connection")
+            
         self.setup_ai()
         
         # Simple tracking
@@ -36,7 +43,7 @@ class SMESocialBot:
     def setup_twitter(self):
         """Setup Twitter API connection"""
         try:
-            # Twitter API v2 client
+            # Twitter API v2 client - no immediate API calls
             self.twitter = tweepy.Client(
                 bearer_token=self.config.twitter_bearer_token,
                 consumer_key=self.config.twitter_api_key,
@@ -46,30 +53,48 @@ class SMESocialBot:
                 wait_on_rate_limit=True
             )
             
-            # Test connection
-            me = self.twitter.get_me()
-            print(f"✅ Connected to Twitter as @{me.data.username}")
+            print("✅ Twitter API client initialized (will test on first use)")
             
         except Exception as e:
             print(f"❌ Twitter setup failed: {e}")
             sys.exit(1)
             
     def setup_ai(self):
-        """Setup AI for content generation"""
-        try:
-            if self.config.openai_api_key:
+        """Setup AI for content generation with fallback support"""
+        
+        # Try OpenAI first
+        if self.config.openai_api_key:
+            try:
                 openai.api_key = self.config.openai_api_key
-                # Test connection
-                openai.models.list()
-                print("✅ OpenAI connected")
+                print("✅ OpenAI configured (will test on first use)")
                 self.ai_provider = 'openai'
-            else:
-                print("❌ No AI provider configured")
-                sys.exit(1)
-                
-        except Exception as e:
-            print(f"❌ AI setup failed: {e}")
-            sys.exit(1)
+                return
+            except Exception as e:
+                print(f"⚠️ OpenAI setup failed: {e}")
+        
+        # Try Anthropic as fallback
+        if self.config.anthropic_api_key:
+            try:
+                import anthropic
+                self.anthropic_client = anthropic.Anthropic(api_key=self.config.anthropic_api_key)
+                print("✅ Anthropic configured (will test on first use)")
+                self.ai_provider = 'anthropic'
+                return
+            except Exception as e:
+                print(f"⚠️ Anthropic setup failed: {e}")
+
+        # Try Grok as a second fallback
+        if self.config.grok_api_key:
+            try:
+                self.grok_client = grok.Client(api_key=self.config.grok_api_key)
+                print("✅ Grok configured (will test on first use)")
+                self.ai_provider = 'grok'
+                return
+            except Exception as e:
+                print(f"⚠️ Grok setup failed: {e}")
+        
+        print("❌ No working AI provider available")
+        sys.exit(1)
     
     def generate_content(self) -> str:
         """Generate social media content using AI"""
@@ -90,18 +115,70 @@ class SMESocialBot:
         
         try:
             prompt = random.choice(content_prompts)
+            content = None
+
+            # 1. Try OpenAI
+            if self.ai_provider == 'openai':
+                try:
+                    response = openai.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": f"You are the social media manager for SME Analytica. Context: {business_context}"},
+                            {"role": "user", "content": prompt}
+                        ],
+                        max_tokens=100,
+                        temperature=0.7
+                    )
+                    content = response.choices[0].message.content.strip()
+                except Exception as openai_error:
+                    print(f"⚠️ OpenAI failed: {str(openai_error)[:50]}...")
+                    if self.config.anthropic_api_key:
+                        print("-> Switching to Anthropic")
+                        self.ai_provider = 'anthropic'
+                    elif self.config.grok_api_key:
+                        print("-> Switching to Grok")
+                        self.ai_provider = 'grok'
+
+            # 2. Try Anthropic (if it's the provider or failed over)
+            if self.ai_provider == 'anthropic':
+                try:
+                    if not hasattr(self, 'anthropic_client'):
+                        import anthropic
+                        self.anthropic_client = anthropic.Anthropic(api_key=self.config.anthropic_api_key)
+                    response = self.anthropic_client.messages.create(
+                        model="claude-3-haiku-20240307",
+                        max_tokens=100,
+                        temperature=0.7,
+                        system=f"You are the social media manager for SME Analytica. Context: {business_context}",
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                    content = response.content[0].text.strip()
+                except Exception as anthropic_error:
+                    print(f"⚠️ Anthropic failed: {str(anthropic_error)[:50]}...")
+                    if self.config.grok_api_key:
+                        print("-> Switching to Grok")
+                        self.ai_provider = 'grok'
+
+            # 3. Try Grok (if it's the provider or failed over)
+            if self.ai_provider == 'grok':
+                try:
+                    if not hasattr(self, 'grok_client'):
+                        self.grok_client = grok.Client(api_key=self.config.grok_api_key)
+                    response = self.grok_client.chat.completions.create(
+                        model="llama3-8b-8192",
+                        messages=[
+                            {"role": "system", "content": f"You are the social media manager for SME Analytica. Context: {business_context}"},
+                            {"role": "user", "content": prompt}
+                        ],
+                        max_tokens=100,
+                        temperature=0.7
+                    )
+                    content = response.choices[0].message.content.strip()
+                except Exception as grok_error:
+                    print(f"⚠️ Grok failed: {str(grok_error)[:50]}...")
             
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": f"You are the social media manager for SME Analytica. Context: {business_context}"},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=100,
-                temperature=0.7
-            )
-            
-            content = response.choices[0].message.content.strip()
+            if content is None:
+                raise Exception("All AI providers failed")
             
             # Ensure it's under 280 characters
             if len(content) > 280:
@@ -112,7 +189,19 @@ class SMESocialBot:
         except Exception as e:
             print(f"❌ Content generation failed: {e}")
             self.session_stats['errors'] += 1
-            return None
+            
+            # Fallback to pre-written content if AI fails
+            fallback_content = [
+                "Running a restaurant? Dynamic pricing can boost your margins by up to 10%! 📊 Data-driven decisions make all the difference. #RestaurantTech #SmallBusiness",
+                "Small business tip: Know your profit margins on every menu item. Most restaurants are surprised by what the data reveals! 💡 #RestaurantOwner #Analytics",
+                "Question for restaurant owners: How often do you adjust your menu prices? Data shows flexibility = profitability. 🍽️ #DynamicPricing #BusinessTips",
+                "The #1 mistake in restaurant pricing? Ignoring competitor analysis. Stay competitive, stay profitable! 🚀 #RestaurantBusiness #PricingStrategy",
+                "Real-time analytics + POS integration = smarter business decisions. It's not just about the food anymore! 📈 #RestaurantTech #DataDriven"
+            ]
+            
+            fallback = random.choice(fallback_content)
+            print(f"📝 Using fallback content: {fallback[:50]}...")
+            return fallback
     
     def post_content(self, content: str) -> bool:
         """Post content to Twitter"""
@@ -204,18 +293,64 @@ class SMESocialBot:
         """Generate a helpful reply to a mention"""
         try:
             business_context = "SME Analytica helps restaurants optimize pricing and increase profits through data analytics."
-            
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": f"You are SME Analytica's helpful social media manager. Context: {business_context}. Reply helpfully and professionally. Keep under 280 characters."},
-                    {"role": "user", "content": f"Someone mentioned us saying: '{original_text}'. Write a helpful, friendly reply."}
-                ],
-                max_tokens=80,
-                temperature=0.6
-            )
-            
-            reply = response.choices[0].message.content.strip()
+            reply = None
+
+            if self.ai_provider == 'openai':
+                try:
+                    response = openai.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": f"You are SME Analytica's helpful social media manager. Context: {business_context}. Reply helpfully and professionally. Keep under 280 characters."},
+                            {"role": "user", "content": f"Someone mentioned us saying: '{original_text}'. Write a helpful, friendly reply."}
+                        ],
+                        max_tokens=80,
+                        temperature=0.6
+                    )
+                    reply = response.choices[0].message.content.strip()
+                except Exception as openai_error:
+                    print(f"⚠️ OpenAI failed during reply: {str(openai_error)[:50]}...")
+                    if self.config.anthropic_api_key:
+                        self.ai_provider = 'anthropic'
+                    elif self.config.grok_api_key:
+                        self.ai_provider = 'grok'
+
+            if self.ai_provider == 'anthropic':
+                try:
+                    if not hasattr(self, 'anthropic_client'):
+                        import anthropic
+                        self.anthropic_client = anthropic.Anthropic(api_key=self.config.anthropic_api_key)
+                    response = self.anthropic_client.messages.create(
+                        model="claude-3-haiku-20240307",
+                        max_tokens=80,
+                        temperature=0.6,
+                        system=f"You are SME Analytica's helpful social media manager. Context: {business_context}. Reply helpfully and professionally. Keep under 280 characters.",
+                        messages=[{"role": "user", "content": f"Someone mentioned us saying: '{original_text}'. Write a helpful, friendly reply."}]
+                    )
+                    reply = response.content[0].text.strip()
+                except Exception as anthropic_error:
+                    print(f"⚠️ Anthropic failed during reply: {str(anthropic_error)[:50]}...")
+                    if self.config.grok_api_key:
+                        self.ai_provider = 'grok'
+
+            if self.ai_provider == 'grok':
+                try:
+                    if not hasattr(self, 'grok_client'):
+                        self.grok_client = grok.Client(api_key=self.config.grok_api_key)
+                    response = self.grok_client.chat.completions.create(
+                        model="llama3-8b-8192",
+                        messages=[
+                            {"role": "system", "content": f"You are SME Analytica's helpful social media manager. Context: {business_context}. Reply helpfully and professionally. Keep under 280 characters."},
+                            {"role": "user", "content": f"Someone mentioned us saying: '{original_text}'. Write a helpful, friendly reply."}
+                        ],
+                        max_tokens=80,
+                        temperature=0.6
+                    )
+                    reply = response.choices[0].message.content.strip()
+                except Exception as grok_error:
+                    print(f"⚠️ Grok failed during reply: {str(grok_error)[:50]}...")
+
+            if reply is None:
+                return None
             
             # Ensure it's under 280 characters
             if len(reply) > 280:
@@ -296,6 +431,10 @@ class SMESocialBot:
         print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
         print("=" * 50)
         
+        # Wait a bit before starting to avoid immediate rate limits
+        print("⏱️ Waiting 30 seconds to avoid rate limits...")
+        time.sleep(30)
+        
         # 1. Generate and post content (2-3 posts)
         posts_to_create = random.choice([2, 3])
         print(f"\n📝 Creating {posts_to_create} posts...")
@@ -339,16 +478,16 @@ def main():
     args = parser.parse_args()
     
     try:
-        bot = SMESocialBot()
-        
         if args.test:
             print("🧪 Test mode - generating sample content...")
+            bot = SMESocialBot(test_mode=True)
             content = bot.generate_content()
             if content:
                 print(f"Generated: {content}")
             else:
                 print("❌ Content generation failed")
         else:
+            bot = SMESocialBot()
             bot.run_daily_automation()
             
     except KeyboardInterrupt:

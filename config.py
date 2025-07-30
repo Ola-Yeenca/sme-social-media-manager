@@ -30,6 +30,7 @@ class Config:
         # AI provider keys (at least one required)
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
         self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
+        self.grok_api_key = os.getenv('GROK_API_KEY')
         
         # Optional keys
         self.linkedin_access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
@@ -57,10 +58,11 @@ class Config:
             sys.exit(1)
         
         # Check AI provider keys (at least one)
-        if not self.openai_api_key and not self.anthropic_api_key:
+        if not self.openai_api_key and not self.anthropic_api_key and not self.grok_api_key:
             print("❌ Missing AI provider keys. Need at least one:")
             print("  OPENAI_API_KEY")
             print("  ANTHROPIC_API_KEY")
+            print("  GROK_API_KEY")
             sys.exit(1)
         
         print("✅ Configuration validated")
@@ -71,6 +73,7 @@ class Config:
             'twitter_configured': bool(self.twitter_api_key),
             'openai_configured': bool(self.openai_api_key),
             'anthropic_configured': bool(self.anthropic_api_key),
+            'grok_configured': bool(self.grok_api_key),
             'linkedin_configured': bool(self.linkedin_access_token),
             'notion_configured': bool(self.notion_api_key)
         }
@@ -88,7 +91,7 @@ def load_dotenv_manually():
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
                     # Remove quotes if present
-                    value = value.strip('"').strip("'")
+                    value = value.strip("\"").strip("'")
                     os.environ[key] = value
         print("✅ Environment variables loaded")
     else:
