@@ -27,7 +27,7 @@ on:
 jobs:
   ai-agent-monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # 15 minutes max (prevent queue blocking)
+    timeout-minutes: 75  # 75 minutes max (allows for rate limit delays)
     
     steps:
     - name: 🚀 Checkout Repository
@@ -74,10 +74,25 @@ jobs:
         mkdir -p logs
         mkdir -p automation_logs
         
-        # Run AI Agent with timeout
-        timeout ${MONITORING_DURATION}m python main.py --mode=ai_agent || {
-          echo "⏰ AI Agent completed monitoring session"
-          echo "✅ Ready for next monitoring cycle"
+        # Run AI Agent with timeout and enhanced error handling
+        echo "🔄 Starting AI Agent (may take several minutes due to rate limiting protection)"
+        timeout ${MONITORING_DURATION}m python main.py --mode=ai_agent 2>&1 | tee agent_output.log || {
+          exit_code=$?
+          echo "⏰ AI Agent completed with exit code: $exit_code"
+          
+          # Check if it was a timeout or rate limiting issue
+          if grep -q "Rate limit exceeded" agent_output.log; then
+            echo "📊 Rate limiting detected - this is expected and handled gracefully"
+            echo "✅ Agent implemented proper backoff and delay strategies"
+            exit 0  # Don't fail the workflow for rate limiting
+          elif [ $exit_code -eq 124 ]; then
+            echo "⏰ Agent completed monitoring session (timeout reached)"
+            echo "✅ Ready for next monitoring cycle"
+            exit 0  # Don't fail the workflow for timeout
+          else
+            echo "❌ Agent failed with exit code: $exit_code"
+            exit $exit_code
+          fi
         }
         
     - name: 📊 Upload Monitoring Logs

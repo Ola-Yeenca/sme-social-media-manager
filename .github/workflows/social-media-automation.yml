@@ -181,8 +181,7 @@ jobs:
 
 🤖 Automated update via GitHub Actions
 Run: ${{ github.run_number }}.${{ github.run_attempt }}
-Mode: ${{ github.event.inputs.mode || 'smart' }}
-"
+Mode: ${{ github.event.inputs.mode || 'smart' }}"
           git push
         else
           echo "ℹ️ No analytics data to commit"

@@ -1,0 +1,240 @@
+# 📋 GitHub Actions Configuration Guide
+
+## 🔐 Required Secrets Configuration
+
+### Core Required Secrets
+```bash
+# Twitter API (Required)
+TWITTER_API_KEY=your_twitter_api_key
+TWITTER_API_SECRET=your_twitter_api_secret
+TWITTER_ACCESS_TOKEN=your_twitter_access_token
+TWITTER_ACCESS_TOKEN_SECRET=your_twitter_access_token_secret
+TWITTER_BEARER_TOKEN=your_twitter_bearer_token
+
+# Notion (Required)
+NOTION_API_KEY=your_notion_integration_key
+SOCIAL_MEDIA_DB_ID=your_notion_database_id
+```
+
+### Optional AI Providers
+```bash
+# AI Services (Optional - system will work with available providers)
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+GOOGLE_GEMINI_API_KEY=your_gemini_key
+GROK_API_KEY=your_grok_key
+PERPLEXITY_API_KEY=your_perplexity_key
+```
+
+### LinkedIn (Optional)
+```bash
+LINKEDIN_ACCESS_TOKEN=your_linkedin_access_token
+LINKEDIN_ORGANIZATION_ID=your_organization_id
+LINKEDIN_CLIENT_ID=your_linkedin_app_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_app_client_secret
+LINKEDIN_REFRESH_TOKEN=your_linkedin_refresh_token
+```
+
+### Monitoring (Optional)
+```bash
+WEBHOOK_URL=your_discord_slack_webhook_url
+```
+
+## 📊 Environment Setup Script
+
+### Quick Setup Script (run locally)
+```bash
+#!/bin/bash
+# setup-github-secrets.sh
+
+# Check if gh CLI is installed
+if ! command -v gh &> /dev/null; then
+    echo "❌ GitHub CLI not found. Install with: brew install gh"
+    exit 1
+fi
+
+# Authenticate with GitHub CLI
+gh auth login
+
+# Set required secrets
+echo "🔐 Setting required secrets..."
+
+# Twitter API (prompt for values)
+read -p "Enter TWITTER_API_KEY: " twitter_key
+gh secret set TWITTER_API_KEY --body "$twitter_key"
+
+read -p "Enter TWITTER_API_SECRET: " twitter_secret
+gh secret set TWITTER_API_SECRET --body "$twitter_secret"
+
+read -p "Enter TWITTER_ACCESS_TOKEN: " twitter_token
+gh secret set TWITTER_ACCESS_TOKEN --body "$twitter_token"
+
+read -p "Enter TWITTER_ACCESS_TOKEN_SECRET: " twitter_token_secret
+gh secret set TWITTER_ACCESS_TOKEN_SECRET --body "$twitter_token_secret"
+
+read -p "Enter TWITTER_BEARER_TOKEN: " twitter_bearer
+gh secret set TWITTER_BEARER_TOKEN --body "$twitter_bearer"
+
+# Notion API
+read -p "Enter NOTION_API_KEY: " notion_key
+gh secret set NOTION_API_KEY --body "$notion_key"
+
+read -p "Enter SOCIAL_MEDIA_DB_ID: " notion_db
+gh secret set SOCIAL_MEDIA_DB_ID --body "$notion_db"
+
+# Optional AI providers
+echo "🤖 Setting optional AI providers (press Enter to skip)..."
+
+read -p "Enter OPENAI_API_KEY (optional): " openai_key
+[ -n "$openai_key" ] && gh secret set OPENAI_API_KEY --body "$openai_key"
+
+read -p "Enter ANTHROPIC_API_KEY (optional): " anthropic_key
+[ -n "$anthropic_key" ] && gh secret set ANTHROPIC_API_KEY --body "$anthropic_key"
+
+read -p "Enter GOOGLE_GEMINI_API_KEY (optional): " gemini_key
+[ -n "$gemini_key" ] && gh secret set GOOGLE_GEMINI_API_KEY --body "$gemini_key"
+
+read -p "Enter GROK_API_KEY (optional): " grok_key
+[ -n "$grok_key" ] && gh secret set GROK_API_KEY --body "$grok_key"
+
+read -p "Enter PERPLEXITY_API_KEY (optional): " perplexity_key
+[ -n "$perplexity_key" ] && gh secret set PERPLEXITY_API_KEY --body "$perplexity_key"
+
+# Optional LinkedIn
+echo "🔗 Setting LinkedIn (optional)..."
+read -p "Enter LINKEDIN_ACCESS_TOKEN (optional): " linkedin_token
+[ -n "$linkedin_token" ] && gh secret set LINKEDIN_ACCESS_TOKEN --body "$linkedin_token"
+
+read -p "Enter LINKEDIN_ORGANIZATION_ID (optional): " linkedin_org
+[ -n "$linkedin_org" ] && gh secret set LINKEDIN_ORGANIZATION_ID --body "$linkedin_org"
+
+echo "✅ All secrets configured successfully!"
+echo "🚀 You can now trigger the workflow manually or wait for scheduled runs"
+```
+
+## 🎯 Manual Workflow Testing
+
+### Test Commands
+```bash
+# Test locally
+cp .env.example .env
+# Edit .env with your keys
+python main.py --mode=content --quiet=false
+
+# Test specific components
+python -c "from src.social.twitter_manager import TwitterManager; print('Twitter OK')"
+python -c "from src.notion.notion_manager import NotionManager; print('Notion OK')"
+
+# Validate environment
+python main.py --status
+```
+
+### Manual GitHub Actions Trigger
+1. Go to GitHub repository → Actions tab
+2. Select "SME Analytica Social Media Automation"
+3. Click "Run workflow"
+4. Select mode: `smart` (recommended for testing)
+5. Click "Run workflow"
+
+## 🚨 Troubleshooting Guide
+
+### Common Issues & Solutions
+
+#### 1. Rate Limiting
+```bash
+# Check Twitter API usage
+curl -X GET "https://api.twitter.com/2/users/me" -H "Authorization: Bearer $TWITTER_BEARER_TOKEN"
+```
+
+#### 2. Missing Secrets
+```bash
+# Verify secrets
+gh secret list
+
+# Check if secrets are accessible
+git log --oneline -10
+```
+
+#### 3. Permission Issues
+```bash
+# Ensure workflow has write permissions
+# Check .github/workflows/social-media-automation.yml permissions section
+```
+
+#### 4. Environment Validation Fails
+```bash
+# Test locally with same environment
+python -c "
+import os
+from src.utils.env_validator import validate_environment
+validate_environment()
+"
+```
+
+## 📈 Monitoring & Alerts
+
+### Key Metrics to Monitor
+1. **Success Rate**: Check Actions tab for success/failure
+2. **Post Frequency**: Monitor Twitter/LinkedIn profiles
+3. **Engagement**: Check Notion analytics database
+4. **API Usage**: Monitor Twitter API dashboard
+
+### Setting Up Alerts
+```bash
+# Add webhook URL for Discord/Slack notifications
+gh secret set WEBHOOK_URL --body "your_webhook_url_here"
+```
+
+## 🔧 Advanced Configuration
+
+### Environment Variables (Optional)
+```bash
+# Custom timeout settings (seconds)
+MAX_EXECUTION_TIME=600
+TWITTER_TIMEOUT=30
+NOTION_TIMEOUT=30
+
+# Content generation limits
+MAX_POSTS_PER_RUN=12
+MAX_ENGAGEMENT_ACTIONS=50
+
+# Rate limiting
+RATE_LIMIT_DELAY=1
+MAX_RETRIES=3
+```
+
+### Branch Protection (Recommended)
+```bash
+# Enable branch protection for main
+gh api repos/{owner}/{repo}/branches/main/protection -X PUT \
+  --input - <<< '{
+    "required_status_checks": {
+      "strict": true,
+      "contexts": ["security-and-health"]
+    },
+    "enforce_admins": false,
+    "required_pull_request_reviews": {
+      "required_approving_review_count": 1
+    }
+  }'
+```
+
+## 📝 Validation Checklist
+
+### Pre-deployment Checklist
+- [ ] All required secrets configured
+- [ ] Environment validation passes locally
+- [ ] Test run with `python main.py --mode=content` succeeds
+- [ ] Twitter API credentials have proper permissions
+- [ ] Notion database has correct schema
+- [ ] Optional AI providers configured as needed
+- [ ] Webhook notifications configured (optional)
+- [ ] Branch protection enabled (recommended)
+
+### Post-deployment Checklist
+- [ ] First manual workflow run succeeds
+- [ ] Logs are generated correctly
+- [ ] Analytics data appears in Notion
+- [ ] Posts appear on social media
+- [ ] No rate limiting errors in logs
+- [ ] Artifacts are uploaded correctly

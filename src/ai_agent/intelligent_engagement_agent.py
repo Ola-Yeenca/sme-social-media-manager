@@ -235,10 +235,29 @@ class IntelligentEngagementAgent:
         self.is_running = True
         self.session_stats["start_time"] = datetime.now()
         
-        # Add initial delay to prevent immediate rate limiting
-        initial_delay = random.randint(30, 120)  # 30 seconds to 2 minutes
-        self.logger.info(f"⏱️ Initial delay: {initial_delay} seconds to prevent rate limiting")
+        # Check for existing rate limits and add appropriate delay
+        self.logger.info("🔍 Checking rate limit status before starting...")
+        
+        # Add initial delay to allow any existing rate limits to clear
+        initial_delay = random.randint(60, 180)  # 1 to 3 minutes
+        self.logger.info(f"⏱️ Initial delay: {initial_delay} seconds to prevent immediate rate limiting")
         await asyncio.sleep(initial_delay)
+        
+        # Test rate limit status with a lightweight API call
+        try:
+            self.logger.info("🧪 Testing API rate limit status...")
+            test_result = await self.twitter_manager._safe_api_call(
+                'mentions', 
+                lambda: self.twitter_manager.client.get_me()
+            )
+            if test_result:
+                self.logger.info("✅ API rate limit test passed - ready to start monitoring")
+            else:
+                self.logger.warning("⚠️ API rate limit test failed - adding extra delay")
+                await asyncio.sleep(300)  # Extra 5 minute delay
+        except Exception as e:
+            self.logger.warning(f"⚠️ Rate limit test failed: {e} - adding extra delay")
+            await asyncio.sleep(600)  # Extra 10 minute delay
         
         # Start monitoring tasks with staggered starts
         monitoring_tasks = []
