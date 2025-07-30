@@ -157,10 +157,10 @@ class IntelligentEngagementAgent:
                 ]
             },
             "monitoring_intervals": {
-                "mentions": 300,  # 5 minutes
-                "hashtags": 600,  # 10 minutes
-                "trends": 1800,   # 30 minutes
-                "competitors": 3600  # 1 hour
+                "mentions": 900,   # 15 minutes (was 5 minutes)
+                "hashtags": 1800,  # 30 minutes (was 10 minutes)
+                "trends": 3600,    # 1 hour (was 30 minutes)
+                "competitors": 7200 # 2 hours (was 1 hour)
             },
             "engagement_limits": {
                 "hourly_responses": 5,
@@ -235,14 +235,29 @@ class IntelligentEngagementAgent:
         self.is_running = True
         self.session_stats["start_time"] = datetime.now()
         
-        # Start monitoring tasks
-        monitoring_tasks = [
-            self._monitor_mentions(),
-            self._monitor_industry_conversations(),
-            self._monitor_trends(),
-            self.hashtag_tracker.start_hashtag_monitoring(),
-            self._analytics_reporter()
-        ]
+        # Add initial delay to prevent immediate rate limiting
+        initial_delay = random.randint(30, 120)  # 30 seconds to 2 minutes
+        self.logger.info(f"⏱️ Initial delay: {initial_delay} seconds to prevent rate limiting")
+        await asyncio.sleep(initial_delay)
+        
+        # Start monitoring tasks with staggered starts
+        monitoring_tasks = []
+        
+        # Start mentions monitoring immediately
+        monitoring_tasks.append(self._monitor_mentions())
+        
+        # Stagger other monitoring tasks to spread API calls
+        await asyncio.sleep(30)  # 30 second delay
+        monitoring_tasks.append(self._monitor_industry_conversations())
+        
+        await asyncio.sleep(30)  # Another 30 second delay  
+        monitoring_tasks.append(self._monitor_trends())
+        
+        await asyncio.sleep(30)  # Another 30 second delay
+        monitoring_tasks.append(self.hashtag_tracker.start_hashtag_monitoring())
+        
+        await asyncio.sleep(30)  # Another 30 second delay
+        monitoring_tasks.append(self._analytics_reporter())
         
         try:
             await asyncio.gather(*monitoring_tasks)
@@ -252,40 +267,86 @@ class IntelligentEngagementAgent:
             self.is_running = False
 
     async def _monitor_mentions(self) -> None:
-        """Continuously monitor mentions and replies"""
+        """Continuously monitor mentions and replies with enhanced rate limiting"""
+        consecutive_errors = 0
+        max_consecutive_errors = 3
+        
         while self.is_running:
             try:
                 self.current_mode = AgentMode.MONITORING
                 
-                # Get recent mentions and notifications
-                notifications = await self.twitter_manager.get_notifications(
-                    since_time=self.last_check_time,
-                    max_results=30
-                )
+                # Add jitter to prevent synchronized requests
+                jitter = random.uniform(0, 60)  # 0-60 seconds jitter
+                await asyncio.sleep(jitter)
                 
-                for notification in notifications:
-                    # Convert notification to tweet format for context building
-                    tweet_data = {
-                        'id': notification['tweet'].id,
-                        'text': notification['content'],
-                        'author': {'username': notification['author']},
-                        'created_at': notification['timestamp'],
-                        'public_metrics': notification['tweet'].public_metrics
-                    }
-
-                    context = await self._build_engagement_context(
-                        tweet_data, OpportunityType.MENTION
+                self.logger.info("🔍 Checking mentions and notifications...")
+                
+                # Get recent mentions and notifications with error handling
+                notifications = []
+                try:
+                    notifications = await self.twitter_manager.get_notifications(
+                        since_time=self.last_check_time,
+                        max_results=15  # Reduced from 30 to be more conservative
                     )
+                except Exception as api_error:
+                    self.logger.warning(f"API error getting notifications: {api_error}")
+                    # Don't break the loop, just continue with empty notifications
+                    notifications = []
+                
+                # Process notifications if we got any
+                if notifications:
+                    self.logger.info(f"📨 Processing {len(notifications)} notifications")
+                    for notification in notifications[:5]:  # Limit to 5 most recent
+                        try:
+                            # Convert notification to tweet format for context building
+                            tweet_data = {
+                                'id': notification['tweet'].id,
+                                'text': notification['content'],
+                                'author': {'username': notification['author']},
+                                'created_at': notification['timestamp'],
+                                'public_metrics': notification['tweet'].public_metrics
+                            }
 
-                    if await self._should_engage(context):
-                        await self._process_engagement_opportunity(context)
+                            context = await self._build_engagement_context(
+                                tweet_data, OpportunityType.MENTION
+                            )
+
+                            if await self._should_engage(context):
+                                await self._process_engagement_opportunity(context)
+                                
+                            # Add delay between processing notifications
+                            await asyncio.sleep(5)
+                            
+                        except Exception as process_error:
+                            self.logger.error(f"Error processing notification: {process_error}")
+                            continue
+                else:
+                    self.logger.info("📭 No new notifications")
+                
+                # Reset consecutive errors on successful cycle
+                consecutive_errors = 0
                 
                 self.last_check_time = datetime.now()
-                await asyncio.sleep(self.monitoring_config["monitoring_intervals"]["mentions"])
+                
+                # Use the configured interval with some jitter
+                interval = self.monitoring_config["monitoring_intervals"]["mentions"]
+                sleep_time = interval + random.uniform(-60, 60)  # ±1 minute jitter
+                self.logger.info(f"⏰ Next mention check in {sleep_time/60:.1f} minutes")
+                await asyncio.sleep(sleep_time)
                 
             except Exception as e:
-                self.logger.error(f"Mention monitoring error: {e}")
-                await asyncio.sleep(60)  # Wait before retrying
+                consecutive_errors += 1
+                self.logger.error(f"Mention monitoring error ({consecutive_errors}/{max_consecutive_errors}): {e}")
+                
+                if consecutive_errors >= max_consecutive_errors:
+                    self.logger.error("Max consecutive errors reached. Pausing mention monitoring for 30 minutes.")
+                    await asyncio.sleep(1800)  # 30 minutes
+                    consecutive_errors = 0
+                else:
+                    # Exponential backoff
+                    backoff_time = min(300 * (2 ** consecutive_errors), 900)  # Max 15 minutes
+                    self.logger.info(f"⏱️ Backing off for {backoff_time} seconds")
+                    await asyncio.sleep(backoff_time)
 
     async def _process_hashtag_opportunities(self) -> None:
         """Process opportunities found by hashtag tracker"""
@@ -317,64 +378,160 @@ class IntelligentEngagementAgent:
                 await asyncio.sleep(300)
 
     async def _monitor_industry_conversations(self) -> None:
-        """Monitor industry conversations and discussions"""
+        """Monitor industry conversations and discussions with rate limiting"""
+        consecutive_errors = 0
+        max_consecutive_errors = 3
+        
         while self.is_running:
             try:
-                # Search for industry conversations
+                # Add jitter to prevent synchronized requests
+                jitter = random.uniform(0, 120)  # 0-2 minutes jitter
+                await asyncio.sleep(jitter)
+                
+                self.logger.info("🔍 Monitoring industry conversations...")
+                
+                # Reduced and more conservative queries
                 industry_queries = [
-                    "restaurant analytics OR restaurant data",
-                    "dynamic pricing OR menu optimization", 
-                    "pos integration OR restaurant tech",
-                    "small business analytics OR SME data"
+                    "restaurant analytics -from:smeanalytica",
+                    "menu optimization -from:smeanalytica"
                 ]
                 
-                for query in industry_queries:
-                    tweets = await self.twitter_manager.search_tweets(
-                        query=f"{query} -from:smeanalytica",
-                        max_results=15
-                    )
-                    
-                    for tweet in tweets:
-                        context = await self._build_engagement_context(
-                            tweet, OpportunityType.INDUSTRY_CONVERSATION
+                for i, query in enumerate(industry_queries):
+                    try:
+                        self.logger.info(f"🔎 Searching: {query}")
+                        tweets = await self.twitter_manager.search_tweets(
+                            query=query,
+                            max_results=8  # Reduced from 15 to be more conservative
                         )
                         
-                        if await self._should_engage(context):
-                            await self._process_engagement_opportunity(context)
+                        if tweets:
+                            self.logger.info(f"📊 Found {len(tweets)} industry tweets")
+                            for tweet in tweets[:3]:  # Limit to 3 most relevant
+                                try:
+                                    context = await self._build_engagement_context(
+                                        tweet, OpportunityType.INDUSTRY_CONVERSATION
+                                    )
+                                    
+                                    if await self._should_engage(context):
+                                        await self._process_engagement_opportunity(context)
+                                        
+                                    # Add delay between processing tweets
+                                    await asyncio.sleep(10)
+                                    
+                                except Exception as tweet_error:
+                                    self.logger.error(f"Error processing industry tweet: {tweet_error}")
+                                    continue
+                        else:
+                            self.logger.info("📭 No industry conversations found")
+                        
+                        # Add delay between queries to prevent rapid API calls
+                        if i < len(industry_queries) - 1:
+                            await asyncio.sleep(60)  # 1 minute between queries
+                            
+                    except Exception as query_error:
+                        self.logger.warning(f"Error with query '{query}': {query_error}")
+                        continue
                 
-                await asyncio.sleep(self.monitoring_config["monitoring_intervals"]["trends"])
+                # Reset consecutive errors on successful cycle
+                consecutive_errors = 0
+                
+                # Use the configured interval with jitter
+                interval = self.monitoring_config["monitoring_intervals"]["trends"]
+                sleep_time = interval + random.uniform(-300, 300)  # ±5 minutes jitter
+                self.logger.info(f"⏰ Next industry conversation check in {sleep_time/60:.1f} minutes")
+                await asyncio.sleep(sleep_time)
                 
             except Exception as e:
-                self.logger.error(f"Industry conversation monitoring error: {e}")
-                await asyncio.sleep(180)
+                consecutive_errors += 1
+                self.logger.error(f"Industry conversation monitoring error ({consecutive_errors}/{max_consecutive_errors}): {e}")
+                
+                if consecutive_errors >= max_consecutive_errors:
+                    self.logger.error("Max consecutive errors reached. Pausing industry monitoring for 1 hour.")
+                    await asyncio.sleep(3600)  # 1 hour
+                    consecutive_errors = 0
+                else:
+                    # Exponential backoff
+                    backoff_time = min(600 * (2 ** consecutive_errors), 1800)  # Max 30 minutes
+                    self.logger.info(f"⏱️ Backing off for {backoff_time} seconds")
+                    await asyncio.sleep(backoff_time)
 
     async def _monitor_trends(self) -> None:
-        """Monitor trending topics for engagement opportunities"""
+        """Monitor trending topics for engagement opportunities with rate limiting"""
+        consecutive_errors = 0
+        max_consecutive_errors = 3
+        
         while self.is_running:
             try:
-                # Get trending topics (this would integrate with Twitter Trends API)
-                # For now, we'll monitor trending hashtags from our config
-                trending_hashtags = self.monitoring_config["hashtags"]["trending"]
+                # Add jitter to prevent synchronized requests
+                jitter = random.uniform(0, 180)  # 0-3 minutes jitter
+                await asyncio.sleep(jitter)
                 
-                for hashtag in trending_hashtags:
-                    tweets = await self.twitter_manager.search_tweets(
-                        query=f"{hashtag} restaurant OR {hashtag} business OR {hashtag} analytics",
-                        max_results=10
-                    )
-                    
-                    for tweet in tweets:
-                        context = await self._build_engagement_context(
-                            tweet, OpportunityType.TREND_OPPORTUNITY
+                self.logger.info("🔍 Monitoring trending topics...")
+                
+                # Get trending topics - reduced and more conservative
+                trending_hashtags = self.monitoring_config["hashtags"]["trending"][:2]  # Only first 2
+                
+                for i, hashtag in enumerate(trending_hashtags):
+                    try:
+                        # More conservative search query
+                        query = f"{hashtag} restaurant -from:smeanalytica"
+                        self.logger.info(f"🔎 Searching trending: {query}")
+                        
+                        tweets = await self.twitter_manager.search_tweets(
+                            query=query,
+                            max_results=5  # Reduced from 10 to be more conservative
                         )
                         
-                        if await self._should_engage(context):
-                            await self._process_engagement_opportunity(context)
+                        if tweets:
+                            self.logger.info(f"📈 Found {len(tweets)} trending tweets for {hashtag}")
+                            for tweet in tweets[:2]:  # Limit to 2 most relevant
+                                try:
+                                    context = await self._build_engagement_context(
+                                        tweet, OpportunityType.TREND_OPPORTUNITY
+                                    )
+                                    
+                                    if await self._should_engage(context):
+                                        await self._process_engagement_opportunity(context)
+                                        
+                                    # Add delay between processing tweets
+                                    await asyncio.sleep(15)
+                                    
+                                except Exception as tweet_error:
+                                    self.logger.error(f"Error processing trending tweet: {tweet_error}")
+                                    continue
+                        else:
+                            self.logger.info(f"📭 No trending tweets found for {hashtag}")
+                        
+                        # Add delay between hashtag searches
+                        if i < len(trending_hashtags) - 1:
+                            await asyncio.sleep(120)  # 2 minutes between hashtags
+                            
+                    except Exception as hashtag_error:
+                        self.logger.warning(f"Error with hashtag '{hashtag}': {hashtag_error}")
+                        continue
                 
-                await asyncio.sleep(self.monitoring_config["monitoring_intervals"]["trends"])
+                # Reset consecutive errors on successful cycle
+                consecutive_errors = 0
+                
+                # Use the configured interval with jitter
+                interval = self.monitoring_config["monitoring_intervals"]["trends"]
+                sleep_time = interval + random.uniform(-600, 600)  # ±10 minutes jitter
+                self.logger.info(f"⏰ Next trend check in {sleep_time/60:.1f} minutes")
+                await asyncio.sleep(sleep_time)
                 
             except Exception as e:
-                self.logger.error(f"Trend monitoring error: {e}")
-                await asyncio.sleep(300)
+                consecutive_errors += 1
+                self.logger.error(f"Trend monitoring error ({consecutive_errors}/{max_consecutive_errors}): {e}")
+                
+                if consecutive_errors >= max_consecutive_errors:
+                    self.logger.error("Max consecutive errors reached. Pausing trend monitoring for 2 hours.")
+                    await asyncio.sleep(7200)  # 2 hours
+                    consecutive_errors = 0
+                else:
+                    # Exponential backoff
+                    backoff_time = min(900 * (2 ** consecutive_errors), 3600)  # Max 1 hour
+                    self.logger.info(f"⏱️ Backing off for {backoff_time} seconds")
+                    await asyncio.sleep(backoff_time)
 
     async def _analytics_reporter(self) -> None:
         """Periodic analytics reporting"""
@@ -739,18 +896,20 @@ Generate a response that provides value, demonstrates expertise, and naturally p
     # Helper methods for analysis and scoring
 
     async def _get_author_profile(self, username: str) -> Dict[str, Any]:
-        """Get author profile information"""
+        """Get author profile information with rate limiting protection"""
         try:
             profile = await self.twitter_manager.get_user_profile(username)
             return profile if profile else {"username": username}
-        except Exception:
+        except Exception as e:
+            self.logger.warning(f"Could not get profile for @{username}: {e}")
             return {"username": username}
 
     async def _get_conversation_thread(self, tweet_id: str) -> List[Dict[str, Any]]:
-        """Get conversation thread for context"""
+        """Get conversation thread for context with rate limiting protection"""
         try:
             return await self.twitter_manager.get_conversation_thread(tweet_id)
-        except Exception:
+        except Exception as e:
+            self.logger.warning(f"Could not get conversation thread for {tweet_id}: {e}")
             return []
 
     def _calculate_industry_relevance(self, content: str) -> float:

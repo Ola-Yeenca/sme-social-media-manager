@@ -5,6 +5,7 @@ Twitter/X API integration for SME Analytica Social Media Manager
 import tweepy
 import asyncio
 import time
+import random
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 import logging
@@ -53,6 +54,33 @@ class TwitterManager:
         self.last_tweet_time = None
         self.min_interval_between_tweets = 300  # 5 minutes
 
+        # Enhanced rate limiting tracking
+        self.api_call_times = {
+            'search': [],
+            'mentions': [],
+            'notifications': [],
+            'user_profile': [],
+            'conversation': []
+        }
+        self.rate_limit_windows = {
+            'search': 900,        # 15 minutes
+            'mentions': 900,      # 15 minutes  
+            'notifications': 900, # 15 minutes
+            'user_profile': 900,  # 15 minutes
+            'conversation': 900   # 15 minutes
+        }
+        self.rate_limits = {
+            'search': 450,        # 450 requests per 15 min
+            'mentions': 75,       # 75 requests per 15 min
+            'notifications': 75,  # 75 requests per 15 min
+            'user_profile': 300,  # 300 requests per 15 min
+            'conversation': 300   # 300 requests per 15 min
+        }
+        
+        # Exponential backoff tracking
+        self.backoff_delays = {}
+        self.max_backoff_delay = 900  # 15 minutes max
+
         # Engagement tracking
         self.daily_engagement_count = 0
         self.daily_engagement_limit = 50
@@ -85,6 +113,101 @@ class TwitterManager:
         except Exception as e:
             self.logger.error(f"Failed to initialize Twitter clients: {e}")
             raise
+
+    def _check_rate_limit(self, endpoint: str) -> bool:
+        """Check if we can make a request to the given endpoint without hitting rate limits"""
+        now = time.time()
+        window = self.rate_limit_windows.get(endpoint, 900)
+        limit = self.rate_limits.get(endpoint, 100)
+        
+        # Clean old timestamps outside the window
+        if endpoint in self.api_call_times:
+            self.api_call_times[endpoint] = [
+                timestamp for timestamp in self.api_call_times[endpoint]
+                if now - timestamp < window
+            ]
+            
+            # Check if we're under the limit
+            return len(self.api_call_times[endpoint]) < limit
+        
+        return True
+
+    def _record_api_call(self, endpoint: str):
+        """Record an API call timestamp"""
+        if endpoint not in self.api_call_times:
+            self.api_call_times[endpoint] = []
+        self.api_call_times[endpoint].append(time.time())
+
+    async def _wait_for_rate_limit_reset(self, endpoint: str, delay_override: Optional[int] = None):
+        """Wait for rate limit reset with exponential backoff"""
+        if endpoint not in self.backoff_delays:
+            self.backoff_delays[endpoint] = 60  # Start with 1 minute
+        
+        # Use override delay or calculate exponential backoff
+        if delay_override:
+            delay = delay_override
+        else:
+            delay = min(self.backoff_delays[endpoint], self.max_backoff_delay)
+            # Add jitter to prevent thundering herd
+            delay = delay + random.uniform(0, delay * 0.1)
+            
+        self.logger.warning(f"Rate limit hit for {endpoint}. Waiting {delay:.1f} seconds...")
+        await asyncio.sleep(delay)
+        
+        # Exponential backoff for next time
+        if not delay_override:
+            self.backoff_delays[endpoint] = min(self.backoff_delays[endpoint] * 2, self.max_backoff_delay)
+
+    def _reset_backoff(self, endpoint: str):
+        """Reset exponential backoff on successful request"""
+        if endpoint in self.backoff_delays:
+            self.backoff_delays[endpoint] = 60
+
+    async def _safe_api_call(self, endpoint: str, api_call_func, *args, **kwargs):
+        """Make a safe API call with rate limiting and exponential backoff"""
+        max_retries = 3
+        
+        for attempt in range(max_retries):
+            # Check rate limit before making request
+            if not self._check_rate_limit(endpoint):
+                await self._wait_for_rate_limit_reset(endpoint)
+                continue
+                
+            try:
+                # Record the API call
+                self._record_api_call(endpoint)
+                
+                # Make the API call
+                result = await api_call_func(*args, **kwargs) if asyncio.iscoroutinefunction(api_call_func) else api_call_func(*args, **kwargs)
+                
+                # Reset backoff on success
+                self._reset_backoff(endpoint)
+                return result
+                
+            except tweepy.TooManyRequests as e:
+                self.logger.warning(f"Rate limit exceeded for {endpoint} (attempt {attempt + 1}/{max_retries})")
+                
+                # Extract reset time from headers if available
+                reset_time = None
+                if hasattr(e, 'response') and e.response and 'x-rate-limit-reset' in e.response.headers:
+                    try:
+                        reset_timestamp = int(e.response.headers['x-rate-limit-reset'])
+                        reset_time = max(0, reset_timestamp - int(time.time()))
+                    except (ValueError, TypeError):
+                        pass
+                
+                if reset_time:
+                    await self._wait_for_rate_limit_reset(endpoint, reset_time + 10)  # Add 10s buffer
+                else:
+                    await self._wait_for_rate_limit_reset(endpoint)
+                    
+            except Exception as e:
+                self.logger.error(f"API call failed for {endpoint}: {e}")
+                if attempt == max_retries - 1:
+                    raise
+                await asyncio.sleep(5)  # Brief delay before retry
+        
+        return None
     
     async def post_tweet(self, content: str, reply_to_tweet_id: Optional[str] = None,
                         media_ids: Optional[List[str]] = None) -> Optional[str]:
@@ -210,9 +333,9 @@ class TwitterManager:
     
     async def search_tweets(self, query: str, max_results: int = 10, 
                           exclude_retweets: bool = True) -> List[Tweet]:
-        """Search for tweets matching a query"""
+        """Search for tweets matching a query with rate limiting"""
         
-        try:
+        def _search_tweets_internal():
             # Build search query
             search_query = query
             if exclude_retweets:
@@ -229,6 +352,15 @@ class TwitterManager:
                 user_fields=['username', 'name', 'description', 'public_metrics'],
                 expansions=['author_id']
             ).flatten(limit=max_results)
+            
+            return tweets
+            
+        try:
+            # Use safe API call with rate limiting
+            tweets = await self._safe_api_call('search', _search_tweets_internal)
+            
+            if not tweets:
+                return []
             
             tweet_objects = []
             for tweet in tweets:
@@ -257,9 +389,9 @@ class TwitterManager:
             return []
     
     async def get_mentions(self, max_results: int = 20, since_time: Optional[datetime] = None) -> List[Tweet]:
-        """Get recent mentions of SME Analytica with optional time filtering"""
-
-        try:
+        """Get recent mentions of SME Analytica with optional time filtering and rate limiting"""
+        
+        def _get_mentions_internal():
             # Build parameters for mentions request
             params = {
                 'id': self.client.get_me().data.id,
@@ -268,15 +400,17 @@ class TwitterManager:
                 'user_fields': ['username', 'name', 'description', 'public_metrics'],
                 'expansions': ['author_id']
             }
-
             # Add time filter if provided (RFC3339 format)
             if since_time:
                 params['start_time'] = since_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-
-            mentions = self.client.get_users_mentions(**params)
-
+            return self.client.get_users_mentions(**params)
+            
+        try:
+            # Use safe API call with rate limiting
+            mentions = await self._safe_api_call('mentions', _get_mentions_internal)
+            
             mention_objects = []
-            if mentions.data:
+            if mentions and mentions.data:
                 for mention in mentions.data:
                     # Find author info
                     author_info = None
