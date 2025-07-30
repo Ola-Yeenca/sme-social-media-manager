@@ -1,0 +1,57 @@
+name: SME Social Media Bot
+
+# Run 4 times daily (every 6 hours)
+on:
+  schedule:
+    - cron: '0 6,12,18,0 * * *'  # 6 AM, 12 PM, 6 PM, 12 AM UTC
+  
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  social-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5  # Short timeout - bot should run quickly
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run social media bot
+      env:
+        # Twitter API credentials (required)
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        
+        # AI Provider (required - use one)
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        
+        # Optional
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      run: |
+        echo "🤖 Starting SME Social Media Bot..."
+        python bot.py
+        echo "✅ Bot run complete!"
+    
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: bot-logs
+        path: "*.log"
+        retention-days: 3

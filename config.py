@@ -1,58 +1,117 @@
+#!/usr/bin/env python3
 """
-SME Social Media Manager - Simple Configuration
-Minimal configuration management for essential APIs only
+Simple configuration management for SME Social Media Bot
+Loads environment variables and validates API keys
 """
 
 import os
+import sys
 from typing import Optional
 
+
 class Config:
-    """Simple configuration class for essential environment variables"""
+    """Simple configuration class"""
     
     def __init__(self):
-        # Essential Twitter API credentials
+        """Load and validate configuration"""
+        self.load_environment()
+        self.validate_required_keys()
+    
+    def load_environment(self):
+        """Load environment variables"""
+        
+        # Twitter API keys (required)
         self.twitter_api_key = os.getenv('TWITTER_API_KEY')
         self.twitter_api_secret = os.getenv('TWITTER_API_SECRET')
         self.twitter_access_token = os.getenv('TWITTER_ACCESS_TOKEN')
         self.twitter_access_token_secret = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
         self.twitter_bearer_token = os.getenv('TWITTER_BEARER_TOKEN')
         
-        # LinkedIn credentials (optional)
-        self.linkedin_access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
-        self.linkedin_organization_id = os.getenv('LINKEDIN_ORGANIZATION_ID')
-        
-        # AI Provider (choose one)
+        # AI provider keys (at least one required)
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
         self.anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
         
-        # Notion for analytics
+        # Optional keys
+        self.linkedin_access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
         self.notion_api_key = os.getenv('NOTION_API_KEY')
-        self.notion_database_id = os.getenv('SOCIAL_MEDIA_DB_ID')
-        
-        # Business context
-        self.company_name = "SME Analytica"
-        self.target_audience = "restaurant owners, hospitality managers, small business entrepreneurs"
-        self.posting_schedule = ["08:00", "12:00", "17:00", "20:00"]  # UTC times
-        
-    def validate(self) -> tuple[bool, list[str]]:
-        """Validate essential configuration"""
-        missing = []
-        
-        # Check Twitter credentials
-        if not all([self.twitter_api_key, self.twitter_api_secret, 
-                   self.twitter_access_token, self.twitter_access_token_secret]):
-            missing.append("Twitter API credentials")
-            
-        # Check AI provider
-        if not (self.openai_api_key or self.anthropic_api_key):
-            missing.append("AI provider API key (OpenAI or Anthropic)")
-            
-        return len(missing) == 0, missing
     
-    def get_ai_provider(self) -> str:
-        """Return which AI provider to use"""
-        if self.openai_api_key:
-            return "openai"
-        elif self.anthropic_api_key:
-            return "anthropic"
-        return None
+    def validate_required_keys(self):
+        """Validate that required API keys are present"""
+        
+        # Check Twitter keys
+        twitter_keys = [
+            self.twitter_api_key,
+            self.twitter_api_secret,
+            self.twitter_access_token,
+            self.twitter_access_token_secret,
+            self.twitter_bearer_token
+        ]
+        
+        if not all(twitter_keys):
+            print("❌ Missing Twitter API keys. Required:")
+            print("  TWITTER_API_KEY")
+            print("  TWITTER_API_SECRET")
+            print("  TWITTER_ACCESS_TOKEN")
+            print("  TWITTER_ACCESS_TOKEN_SECRET")
+            print("  TWITTER_BEARER_TOKEN")
+            sys.exit(1)
+        
+        # Check AI provider keys (at least one)
+        if not self.openai_api_key and not self.anthropic_api_key:
+            print("❌ Missing AI provider keys. Need at least one:")
+            print("  OPENAI_API_KEY")
+            print("  ANTHROPIC_API_KEY")
+            sys.exit(1)
+        
+        print("✅ Configuration validated")
+    
+    def get_status(self) -> dict:
+        """Get configuration status"""
+        return {
+            'twitter_configured': bool(self.twitter_api_key),
+            'openai_configured': bool(self.openai_api_key),
+            'anthropic_configured': bool(self.anthropic_api_key),
+            'linkedin_configured': bool(self.linkedin_access_token),
+            'notion_configured': bool(self.notion_api_key)
+        }
+
+
+def load_dotenv_manually():
+    """Manually load .env file if present"""
+    env_file = '.env'
+    
+    if os.path.exists(env_file):
+        print("📝 Loading .env file...")
+        with open(env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    # Remove quotes if present
+                    value = value.strip('"').strip("'")
+                    os.environ[key] = value
+        print("✅ Environment variables loaded")
+    else:
+        print("ℹ️ No .env file found, using system environment variables")
+
+
+# Load environment variables when imported
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    load_dotenv_manually()
+
+
+if __name__ == "__main__":
+    """Test configuration"""
+    print("🧪 Testing configuration...")
+    config = Config()
+    status = config.get_status()
+    
+    print("\n📊 Configuration Status:")
+    for service, configured in status.items():
+        status_icon = "✅" if configured else "❌"
+        print(f"  {service}: {status_icon}")
+    
+    print("\n✅ Configuration test complete!")
