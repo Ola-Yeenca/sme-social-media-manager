@@ -801,6 +801,53 @@ async def run_ai_agent() -> Dict[str, Any]:
         results["errors"].append(f"ai_agent: {e}")
         return results
 
+async def run_ai_agent_simple() -> Dict[str, Any]:
+    """Run simple AI mention checker (once per hour, no complex rate limiting)"""
+
+    logger = logging.getLogger(__name__)
+    logger.info("🤖 Starting Simple AI Mention Checker")
+
+    results = {
+        "mode": "ai_agent_simple",
+        "systems_active": ["simple_mention_checker"],
+        "mentions_found": 0,
+        "mentions_processed": 0,
+        "success": False,
+        "errors": []
+    }
+
+    try:
+        from src.ai_agent.simple_mention_checker import create_simple_mention_checker
+
+        # Create and run the simple mention checker
+        checker = await create_simple_mention_checker()
+        
+        logger.info("🚀 Simple AI Mention Checker initialized successfully")
+        logger.info("🔍 Checking mentions once...")
+
+        # Check mentions once (no continuous monitoring)
+        check_results = await checker.check_mentions()
+
+        # Update results
+        results.update({
+            "mentions_found": check_results.get("mentions_found", 0),
+            "mentions_processed": check_results.get("mentions_processed", 0),
+            "success": check_results.get("success", False),
+            "timestamp": check_results.get("timestamp", "")
+        })
+
+        if check_results.get("errors"):
+            results["errors"].extend(check_results["errors"])
+
+        logger.info(f"✅ Simple AI Mention Checker completed: {results}")
+
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ Simple AI Mention Checker failed: {e}")
+        results["errors"].append(f"simple_ai_agent: {e}")
+        return results
+
 async def run_ai_council_mode() -> Dict[str, Any]:
     """Run AI Council collaborative content creation mode"""
 
@@ -994,6 +1041,7 @@ Examples:
   python main.py --mode=content         # Generate content only
   python main.py --mode=engagement      # Run engagement automation (likes, retweets, comments)
   python main.py --mode=ai_agent        # Run intelligent AI engagement agent (continuous monitoring)
+  python main.py --mode=ai_agent_simple # Run simple AI mention checker (once per hour)
   python main.py --mode=ai_council      # Run AI Council collaborative content creation
   python main.py --mode=analytics       # Run analytics only
   python main.py --status               # Show system status
@@ -1002,7 +1050,7 @@ Examples:
     
     parser.add_argument(
         '--mode',
-        choices=['enhanced', 'smart', 'basic', 'content', 'analytics', 'engagement', 'ai_agent', 'ai_council'],
+        choices=['enhanced', 'smart', 'basic', 'content', 'analytics', 'engagement', 'ai_agent', 'ai_agent_simple', 'ai_council'],
         default='enhanced',
         help='Operation mode (default: enhanced)'
     )
@@ -1057,6 +1105,8 @@ Examples:
             results = await run_engagement_automation()
         elif args.mode == 'ai_agent':
             results = await run_ai_agent()
+        elif args.mode == 'ai_agent_simple':
+            results = await run_ai_agent_simple()
         elif args.mode == 'ai_council':
             results = await run_ai_council_mode()
         elif args.mode == 'analytics':

@@ -1,4 +1,4 @@
-name: 🤖 AI Agent Continuous Monitoring (RESPONDS TO @MENTIONS)
+name: 🤖 Simple AI Mention Checker (RESPONDS TO @MENTIONS)
 
 # Prevent multiple AI agent instances from running simultaneously
 concurrency:
@@ -7,10 +7,8 @@ concurrency:
 
 on:
   schedule:
-    # Run AI Agent every hour for continuous mention monitoring
+    # Run Simple AI Mention Checker every hour
     - cron: '0 * * * *'
-    # Run every 30 minutes during business hours (8 AM - 8 PM Madrid time)
-    - cron: '*/30 7-19 * * *'
   workflow_dispatch:
     inputs:
       duration:
@@ -25,9 +23,9 @@ on:
           - '300'
 
 jobs:
-  ai-agent-monitor:
+  simple-ai-agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 75  # 75 minutes max (allows for rate limit delays)
+    timeout-minutes: 10  # 10 minutes max (simple single check)
     
     steps:
     - name: 🚀 Checkout Repository
@@ -43,7 +41,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: 🤖 Run AI Agent Continuous Monitoring
+    - name: 🤖 Run Simple AI Mention Checker
       env:
         # Twitter/X API Credentials
         TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
@@ -52,75 +50,52 @@ jobs:
         TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
         TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
         
-        # AI Provider API Keys
-        GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        # Notion Configuration (optional)
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
         
-        # Notion Configuration
-        NOTION_TOKEN: ${{ secrets.NOTION_API_KEY }}
-        NOTION_DATABASE_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
-        
-        # Monitoring Configuration
-        MONITORING_DURATION: ${{ github.event.inputs.duration || '60' }}
         LOG_LEVEL: "INFO"
         
       run: |
-        echo "🤖 Starting AI Agent for @mention monitoring..."
-        echo "⏱️  Duration: ${MONITORING_DURATION} minutes"
-        echo "🎯 Will respond to @smeanalytica mentions automatically"
+        echo "🤖 Starting Simple AI Mention Checker..."
+        echo "🎯 Will check @smeanalytica mentions once and respond"
         
         # Create logs directory
         mkdir -p logs
         mkdir -p automation_logs
         
-        # Run AI Agent with timeout and enhanced error handling
-        echo "🔄 Starting AI Agent (may take several minutes due to rate limiting protection)"
-        timeout ${MONITORING_DURATION}m python main.py --mode=ai_agent 2>&1 | tee agent_output.log || {
-          exit_code=$?
-          echo "⏰ AI Agent completed with exit code: $exit_code"
-          
-          # Check if it was a timeout or rate limiting issue
-          if grep -q "Rate limit exceeded" agent_output.log; then
-            echo "📊 Rate limiting detected - this is expected and handled gracefully"
-            echo "✅ Agent implemented proper backoff and delay strategies"
-            exit 0  # Don't fail the workflow for rate limiting
-          elif [ $exit_code -eq 124 ]; then
-            echo "⏰ Agent completed monitoring session (timeout reached)"
-            echo "✅ Ready for next monitoring cycle"
-            exit 0  # Don't fail the workflow for timeout
-          else
-            echo "❌ Agent failed with exit code: $exit_code"
-            exit $exit_code
-          fi
-        }
+        # Run Simple AI Mention Checker (single check, no complex monitoring)
+        echo "🔄 Running simple mention check (should complete in under 2 minutes)"
+        python main.py --mode=ai_agent_simple 2>&1 | tee agent_output.log
         
-    - name: 📊 Upload Monitoring Logs
+        echo "✅ Simple AI Mention Checker completed"
+        
+    - name: 📊 Upload Check Logs
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ai-agent-monitoring-${{ github.run_number }}
+        name: simple-ai-agent-${{ github.run_number }}
         path: |
           logs/
           automation_logs/
         retention-days: 3
         
-    - name: 📈 Report Monitoring Status
+    - name: 📈 Report Check Status
       if: always()
       run: |
-        echo "🎉 AI Agent monitoring session completed!"
-        echo "📊 Check artifacts for detailed engagement logs"
+        echo "🎉 Simple AI Mention Checker completed!"
+        echo "📊 Check artifacts for detailed logs"
         
         # Show recent log entries if available
         if [ -f "logs/social_manager.log" ]; then
-          echo "📝 Recent monitoring activity:"
+          echo "📝 Recent activity:"
           tail -10 logs/social_manager.log || echo "No recent logs found"
         fi
         
         echo ""
-        echo "🤖 AI Agent Status:"
-        echo "✅ Monitoring @smeanalytica mentions"
-        echo "✅ Responding to engagement opportunities"
-        echo "✅ Next monitoring cycle starts automatically"
+        echo "🤖 Simple AI Status:"
+        echo "✅ Checked @smeanalytica mentions"
+        echo "✅ Responded to new mentions"
+        echo "✅ Next check runs automatically in 1 hour"
         echo ""
         echo "💡 Test it: Tweet @smeanalytica and get an AI response!"
