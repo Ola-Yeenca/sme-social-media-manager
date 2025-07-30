@@ -1,0 +1,192 @@
+name: 📝 AI Council Content Creator (SAVES TO NOTION ONLY - NO POSTING)
+
+on:
+  # DISABLED SCHEDULED RUNS - This workflow only creates content, doesn't post
+  # Use social-media-automation.yml for actual posting
+  # schedule:
+  #   - cron: '0 */4 * * *'
+  #   - cron: '0 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Execution Mode'
+        required: true
+        default: 'ai_council'
+        type: choice
+        options:
+          - ai_council
+          - ai_agent
+          - enhanced
+          - engagement_only
+
+jobs:
+  ai-council-manager:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🚀 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Cache Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: 🔧 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 🤖 Run AI Council Social Media Manager
+      env:
+        # Twitter/X API Credentials
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        
+        # LinkedIn API Credentials
+        LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+        LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+        LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+        LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
+        LINKEDIN_ORGANIZATION_ID: ${{ secrets.LINKEDIN_ORGANIZATION_ID }}
+        
+        # AI Provider API Keys
+        GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        
+        # Notion Configuration
+        NOTION_TOKEN: ${{ secrets.NOTION_API_KEY }}
+        NOTION_DATABASE_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
+        LOCAL_BUSINESSES_DB_ID: ${{ secrets.LOCAL_BUSINESSES_DB_ID }}
+        
+        # Content Configuration
+        POSTING_SCHEDULE: "4"
+        ENGAGEMENT_FREQUENCY: "hourly"
+        PRIMARY_LANGUAGE: "en"
+        SECONDARY_LANGUAGE: "es"
+        TIMEZONE: "UTC"
+        
+        # Logging
+        LOG_LEVEL: "INFO"
+        LOG_FILE: "logs/social_manager.log"
+        
+      run: |
+        echo "🤖 Starting AI Council Social Media Manager..."
+        
+        # Determine execution mode
+        MODE="${{ github.event.inputs.mode || 'ai_council' }}"
+        
+        # Create logs directory
+        mkdir -p logs
+        mkdir -p automation_logs
+        
+        echo "🎯 Running in mode: $MODE"
+        
+        # Run based on schedule or manual trigger
+        if [ "$MODE" = "ai_council" ]; then
+          echo "🏛️ Running AI Council Collaborative Content Creation..."
+          python main.py --mode=ai_council
+        elif [ "$MODE" = "ai_agent" ]; then
+          echo "🤖 Running AI Agent Engagement Automation..."
+          python main.py --mode=ai_agent
+        elif [ "$MODE" = "enhanced" ]; then
+          echo "🚀 Running Enhanced Social Media Manager..."
+          python main.py --mode=enhanced
+        elif [ "$MODE" = "engagement_only" ]; then
+          echo "🎯 Running Engagement-Only Mode..."
+          python main.py --mode=engagement
+        else
+          echo "🔄 Running Default AI Council Mode..."
+          python main.py --mode=ai_council
+        fi
+        
+    - name: 📊 Upload Automation Logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ai-council-logs-${{ github.run_number }}
+        path: |
+          logs/
+          automation_logs/
+        retention-days: 7
+        
+    - name: 📈 Report Status
+      if: always()
+      run: |
+        echo "🎉 AI Council Social Media Manager execution completed!"
+        echo "📊 Check artifacts for detailed logs and analytics"
+        
+        # Show recent log entries if available
+        if [ -f "logs/social_manager.log" ]; then
+          echo "📝 Recent log entries:"
+          tail -20 logs/social_manager.log || echo "No recent logs found"
+        fi
+        
+        # Show automation results if available
+        if [ -d "automation_logs" ]; then
+          echo "🤖 Automation results:"
+          ls -la automation_logs/ || echo "No automation logs found"
+        fi
+
+  # Separate job for engagement monitoring (runs more frequently)
+  engagement-monitor:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.mode == 'ai_agent' || github.event.inputs.mode == 'engagement_only'
+    
+    steps:
+    - name: 🚀 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 🎯 Run Engagement Monitoring
+      env:
+        # API Credentials (same as above)
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        
+        GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        
+        NOTION_TOKEN: ${{ secrets.NOTION_API_KEY }}
+        NOTION_DATABASE_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
+        
+      run: |
+        echo "🎯 Running AI Agent Engagement Monitoring..."
+        python main.py --mode=engagement
+        
+    - name: 📊 Upload Engagement Logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: engagement-logs-${{ github.run_number }}
+        path: |
+          logs/
+          automation_logs/
+        retention-days: 3
