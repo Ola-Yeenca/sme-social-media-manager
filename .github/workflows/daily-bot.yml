@@ -1,12 +1,22 @@
 name: SME Social Media Bot
 
-# Run 4 times daily (every 6 hours)
+# Run 4 times daily (every 6 hours) 
 on:
   schedule:
     - cron: '0 6,12,18,0 * * *'  # 6 AM, 12 PM, 6 PM, 12 AM UTC
   
   # Allow manual triggering
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Bot mode (auto, posting-only, full)'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - posting-only
+          - full
 
 jobs:
   social-bot:
@@ -45,7 +55,24 @@ jobs:
         NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
       run: |
         echo "🤖 Starting SME Social Media Bot..."
-        python bot.py
+        
+        # Determine which mode to run
+        MODE="${{ github.event.inputs.mode || 'auto' }}"
+        echo "📋 Running in mode: $MODE"
+        
+        if [ "$MODE" = "posting-only" ]; then
+          echo "🔒 POSTING-ONLY MODE: Skipping retrieval functions to save API quota"
+          python bot.py --posting-only
+        elif [ "$MODE" = "full" ]; then
+          echo "🚀 FULL MODE: All functions enabled (uses retrieval quota)"
+          python bot.py
+        else
+          echo "🤖 AUTO MODE: Bot determines mode based on current date"
+          echo "📅 Until Aug 11, 2025: posting-only mode"
+          echo "📅 After Aug 11, 2025: full functionality"
+          python bot.py
+        fi
+        
         echo "✅ Bot run complete!"
     
     - name: Upload logs (if failed)
