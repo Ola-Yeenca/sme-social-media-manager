@@ -182,3 +182,55 @@ python -c "from src.notion.notion_manager import NotionManager; print('Notion OK
 - **Hashtags**: 3-5 relevant hashtags per post
 - **Languages**: 70% English, 30% Spanish
 - **Focus**: Practical value for restaurant/small business owners
+
+## 🚨 CRITICAL: GitHub Actions Workflow Fixed (August 9, 2025)
+
+### Issue Resolution - Workflow Failures
+- **Problem**: Bot failing within 2-9 seconds due to wrong `grok` package dependency
+- **Root Cause**: `requirements.txt` installed Zope web framework instead of Groq AI client
+- **Fix Applied**: Replaced `grok>=0.4.0` with `groq>=0.4.0` and updated imports
+- **Status**: ✅ RESOLVED - Bot now initializes correctly in local tests
+- **Remaining**: Verify GitHub Secrets configuration for production deployment
+
+### Files Updated:
+- `requirements.txt`: Fixed Groq package dependency
+- `bot.py`: Updated imports and client initialization
+- `CHANGELOG.md`: Created agent task tracking system
+
+## 🚨 CRITICAL: Twitter API Quota Management (IMPLEMENTED July 30, 2025)
+
+### Current Production Setup
+- **Bot Status**: ✅ PRODUCTION READY - Posts 3-4 times daily
+- **Current Mode**: Posting-only until August 11, 2025 
+- **API Limits**: Free tier - 500 posts/month (✅ plenty), 100 retrievals/month (❌ exceeded at 103/100)
+
+### Automatic Behavior
+- **Until Aug 11**: Bot automatically runs in posting-only mode (no retrievals)
+- **After Aug 11**: Bot will implement Weekly Engagement Strategy
+
+### Weekly Engagement Strategy (SELECTED - Implement Aug 11)
+```bash
+# SUNDAY: Full functionality (mentions + search + posting) = 12 retrievals
+# MON-SAT: Posting-only mode = 0 retrievals  
+# MONTHLY TOTAL: 12/100 retrievals (88 buffer remaining)
+# DAILY POSTS: 3-4 posts every day (21-28 posts/week)
+```
+
+### Implementation Required Aug 11:
+1. Update `.github/workflows/daily-bot.yml` to run full mode only on Sundays
+2. Modify bot logic to check `datetime.now().weekday() == 6` for Sunday
+3. Monitor Twitter Developer Portal for actual usage
+4. Adjust if needed based on real consumption
+
+### Files to Remember:
+- `bot.py` - Main bot with posting-only mode implemented
+- `API_QUOTA_MANAGEMENT.md` - Complete documentation and strategies
+- `check_rate_limit.py` - Debugging tool for API limits
+- `.github/workflows/daily-bot.yml` - Updated with smart mode selection
+
+### Key Insight:
+- **Posting** (500/month): Bot uses ~100/month ✅ PLENTY AVAILABLE
+- **Retrieving** (100/month): Bot was using 480/month ❌ MAJOR OVERAGE
+- **Solution**: Reduce retrieval frequency, maintain posting frequency
+
+The bot is production-ready and posting content daily. Weekly engagement strategy will be implemented August 11th to work within free API limits permanently.

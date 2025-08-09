@@ -4,6 +4,6 @@
 tweepy>=4.14.0          # Twitter API wrapper
 openai>=1.0.0           # AI content generation (primary)
 anthropic>=0.25.0       # AI content generation (fallback)
-grok>=0.4.0             # AI content generation (fallback)
+groq>=0.4.0             # AI content generation (fallback)
 python-dotenv>=1.0.0    # Environment variable loading
 requests>=2.31.0        # HTTP requests (dependency)

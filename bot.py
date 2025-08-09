@@ -13,7 +13,7 @@ from typing import List, Dict, Optional
 
 import tweepy
 import openai
-import grok
+import groq
 from config import Config
 
 
@@ -86,7 +86,7 @@ class SMESocialBot:
         # Try Grok as a second fallback
         if self.config.grok_api_key:
             try:
-                self.grok_client = grok.Client(api_key=self.config.grok_api_key)
+                self.grok_client = groq.Groq(api_key=self.config.grok_api_key)
                 print("✅ Grok configured (will test on first use)")
                 self.ai_provider = 'grok'
                 return
@@ -163,7 +163,7 @@ class SMESocialBot:
             if self.ai_provider == 'grok':
                 try:
                     if not hasattr(self, 'grok_client'):
-                        self.grok_client = grok.Client(api_key=self.config.grok_api_key)
+                        self.grok_client = groq.Groq(api_key=self.config.grok_api_key)
                     response = self.grok_client.chat.completions.create(
                         model="llama3-8b-8192",
                         messages=[
@@ -379,7 +379,7 @@ class SMESocialBot:
             if self.ai_provider == 'grok':
                 try:
                     if not hasattr(self, 'grok_client'):
-                        self.grok_client = grok.Client(api_key=self.config.grok_api_key)
+                        self.grok_client = groq.Groq(api_key=self.config.grok_api_key)
                     response = self.grok_client.chat.completions.create(
                         model="llama3-8b-8192",
                         messages=[
