@@ -34,6 +34,7 @@ class Config:
         
         # Optional keys
         self.linkedin_access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
+        self.linkedin_organization_id = os.getenv('LINKEDIN_ORGANIZATION_ID')
         self.notion_api_key = os.getenv('NOTION_API_KEY')
     
     def validate_required_keys(self):

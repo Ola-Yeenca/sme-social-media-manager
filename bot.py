@@ -16,20 +16,24 @@ import openai
 import groq
 from config import Config
 from viral_predictor import ViralTweetPredictor, ViralScore
+from linkedin_manager import LinkedInManager
 
 
 class SMESocialBot:
     """Simple social media bot that actually works"""
     
-    def __init__(self, test_mode=False):
+    def __init__(self, test_mode=False, multi_platform=True):
         """Initialize the bot with API connections"""
         self.config = Config()
         self.test_mode = test_mode
+        self.multi_platform = multi_platform
         
         if not test_mode:
             self.setup_twitter()
+            if multi_platform:
+                self.setup_linkedin()
         else:
-            print("🧪 Test mode - skipping Twitter connection")
+            print("🧪 Test mode - skipping API connections")
             
         self.setup_ai()
         
@@ -40,6 +44,7 @@ class SMESocialBot:
         # Simple tracking
         self.session_stats = {
             'posts_created': 0,
+            'linkedin_posts': 0,
             'mentions_checked': 0,
             'engagements_made': 0,
             'errors': 0,
@@ -64,6 +69,23 @@ class SMESocialBot:
         except Exception as e:
             print(f"❌ Twitter setup failed: {e}")
             sys.exit(1)
+    
+    def setup_linkedin(self):
+        """Setup LinkedIn API connection"""
+        try:
+            if self.config.linkedin_access_token:
+                self.linkedin = LinkedInManager(
+                    access_token=self.config.linkedin_access_token,
+                    organization_id=getattr(self.config, 'linkedin_organization_id', None)
+                )
+                print("✅ LinkedIn API client initialized")
+            else:
+                print("⚠️ LinkedIn token not found - LinkedIn posting disabled")
+                self.linkedin = None
+                
+        except Exception as e:
+            print(f"⚠️ LinkedIn setup failed: {e}")
+            self.linkedin = None
             
     def setup_ai(self):
         """Setup AI for content generation with fallback support"""
@@ -285,7 +307,7 @@ class SMESocialBot:
         
         return variations
     
-    def post_best_viral_content(self) -> bool:
+    def post_best_viral_content(self, multi_platform=False) -> bool:
         """Generate viral variations and post the best one"""
         try:
             # Generate base content first
@@ -298,37 +320,70 @@ class SMESocialBot:
                 # Post the best one (first in sorted list)
                 best_tweet, best_score = variations[0]
                 print(f"\n🎯 Posting best variation with score {best_score.total_score}/100")
-                return self.post_content(best_tweet)
+                return self.post_multi_platform(best_tweet) if multi_platform else self.post_content(best_tweet)
             else:
                 # Fallback to regular posting
-                return self.post_content(base_content)
+                return self.post_multi_platform(base_content) if multi_platform else self.post_content(base_content)
                 
         except Exception as e:
             print(f"❌ Viral content generation failed: {e}")
             # Fallback to regular content
             content = self.generate_content()
-            return self.post_content(content)
+            return self.post_multi_platform(content) if multi_platform else self.post_content(content)
     
-    def check_mentions(self) -> List[Dict]:
-        """Check for mentions and replies"""
+    def post_multi_platform(self, content: str) -> bool:
+        """Post content to both Twitter and LinkedIn"""
+        twitter_success = False
+        linkedin_success = False
+        
+        # Post to Twitter
+        print("\n🐦 Posting to Twitter...")
+        twitter_success = self.post_content(content)
+        
+        # Post to LinkedIn if configured
+        if self.linkedin and hasattr(self, 'linkedin'):
+            print("\n🔗 Posting to LinkedIn...")
+            try:
+                linkedin_success, response = self.linkedin.post_to_linkedin(content, optimize_viral=True)
+                if linkedin_success:
+                    self.session_stats['linkedin_posts'] += 1
+                else:
+                    print(f"   LinkedIn error: {response.get('error', 'Unknown error')}")
+            except Exception as e:
+                print(f"   LinkedIn posting failed: {e}")
+        else:
+            print("\n⚠️ LinkedIn not configured - skipping LinkedIn post")
+        
+        return twitter_success or linkedin_success
+    
+    def check_mentions(self, days_back: int = 1) -> List[Dict]:
+        """Check for mentions and replies with configurable lookback period"""
         try:
             # Check if we're rate limited
             if hasattr(self, 'rate_limited') and self.rate_limited:
                 print("🚀 [SIMULATION] Would check mentions...")
-                # Simulate finding mentions
+                # Simulate finding mentions based on days back
                 simulated_mentions = [
                     {'id': '123456', 'text': '@smeanalytica Love your restaurant analytics insights!', 'author_id': 'user1'},
-                    {'id': '123457', 'text': '@smeanalytica Can you help with dynamic pricing?', 'author_id': 'user2'}
+                    {'id': '123457', 'text': '@smeanalytica Can you help with dynamic pricing?', 'author_id': 'user2'},
+                    {'id': '123458', 'text': '@smeanalytica Interesting data on profit margins!', 'author_id': 'user3'},
                 ]
-                print(f"✅ [SIMULATION] Found {len(simulated_mentions)} mentions")
+                # More mentions for weekly mode
+                if days_back > 1:
+                    simulated_mentions.extend([
+                        {'id': '123459', 'text': '@smeanalytica How do you handle seasonal pricing?', 'author_id': 'user4'},
+                        {'id': '123460', 'text': '@smeanalytica Great insights on menu optimization!', 'author_id': 'user5'}
+                    ])
+                
+                print(f"✅ [SIMULATION] Found {len(simulated_mentions)} mentions from last {days_back} days")
                 return simulated_mentions
             
-            # Get mentions from last 24 hours
-            since_time = datetime.now() - timedelta(hours=24)
+            # Get mentions from specified time period
+            since_time = datetime.now() - timedelta(days=days_back)
             
             mentions = self.twitter.get_users_mentions(
                 id=self.twitter.get_me().data.id,
-                max_results=10,
+                max_results=min(100, days_back * 10),  # More results for longer periods
                 start_time=since_time.isoformat()
             )
             
@@ -343,14 +398,14 @@ class SMESocialBot:
                     })
                     
             self.session_stats['mentions_checked'] += len(mention_list)
-            print(f"✅ Found {len(mention_list)} mentions")
+            print(f"✅ Found {len(mention_list)} mentions from last {days_back} days")
             return mention_list
             
         except Exception as e:
             if "Rate limit exceeded" in str(e):
                 print("⚠️ Hit rate limit checking mentions, switching to simulation...")
                 self.rate_limited = True
-                return self.check_mentions()  # Retry in simulation mode
+                return self.check_mentions(days_back)  # Retry in simulation mode
             print(f"❌ Mention check failed: {e}")
             self.session_stats['errors'] += 1
             return []
@@ -540,14 +595,18 @@ class SMESocialBot:
         self.session_stats['engagements_made'] += engagements
         return engagements
     
-    def run_daily_automation(self, posting_only=False):
+    def run_daily_automation(self, posting_only=False, weekly_engagement=False, multi_platform=True):
         """Run the complete daily automation sequence"""
         print(f"\n🤖 Starting SME Social Media Bot")
         print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        print(f"🌍 Platforms: {'Twitter + LinkedIn' if multi_platform and self.linkedin else 'Twitter only'}")
         
-        if posting_only:
-            print("🔒 POSTING-ONLY MODE: API retrieval quota exceeded")
-            print("📅 Full functionality returns August 11th when quota resets")
+        mode_description = "WEEKLY FULL ENGAGEMENT" if weekly_engagement else ("POSTING-ONLY" if posting_only else "FULL AUTOMATION")
+        print(f"💯 Mode: {mode_description}")
+        
+        if posting_only and not weekly_engagement:
+            print("🔒 API retrieval quota management active")
+            print("📅 Full engagement available on Sundays or after Aug 11th")
         
         print("=" * 50)
         
@@ -563,36 +622,45 @@ class SMESocialBot:
             # Use viral prediction for first post, regular for others
             if i == 0:
                 print("\n🎯 Using viral prediction for first post...")
-                success = self.post_best_viral_content()
+                success = self.post_best_viral_content(multi_platform=multi_platform)
             else:
                 content = self.generate_content()
                 if content:
-                    success = self.post_content(content)
+                    if multi_platform:
+                        success = self.post_multi_platform(content)
+                    else:
+                        success = self.post_content(content)
             
             if success and i < posts_to_create - 1:
                 # Wait between posts
                 time.sleep(60)  # 1 minute between posts
         
-        if not posting_only:
-            # 2. Check and engage with mentions - SKIPPED IN POSTING-ONLY MODE
-            print(f"\n👂 Checking mentions...")
-            mentions = self.check_mentions()
+        if not posting_only or weekly_engagement:
+            # 2. Check and engage with mentions
+            days_back = 7 if weekly_engagement else 1
+            print(f"\n👂 Checking mentions from last {days_back} days...")
+            mentions = self.check_mentions(days_back=days_back)
             if mentions:
                 self.engage_with_mentions(mentions)
             
-            # 3. Find and engage with relevant posts - SKIPPED IN POSTING-ONLY MODE
-            print(f"\n🔍 Finding relevant posts to engage with...")
-            relevant_posts = self.find_relevant_posts()
-            if relevant_posts:
-                self.engage_with_relevant_posts(relevant_posts)
+            # 3. Find and engage with relevant posts (only if not weekly mode to avoid overuse)
+            if not weekly_engagement:
+                print(f"\n🔍 Finding relevant posts to engage with...")
+                relevant_posts = self.find_relevant_posts()
+                if relevant_posts:
+                    self.engage_with_relevant_posts(relevant_posts)
+            else:
+                print(f"\n⏭️ Skipping post search in weekly mode (focus on mentions)")
         else:
             print(f"\n⏸️ SKIPPING mention checks (saves retrieval quota)")
             print(f"⏸️ SKIPPING post searches (saves retrieval quota)")
-            print(f"📊 Retrieval functions resume August 11th")
+            print(f"📊 Full engagement available on Sundays")
         
         # 4. Show results
         print(f"\n📊 Session Results:")
         print(f"  Posts created: {self.session_stats['posts_created']}")
+        if multi_platform and self.linkedin:
+            print(f"  LinkedIn posts: {self.session_stats['linkedin_posts']}")
         print(f"  Viral predictions: {self.session_stats['viral_predictions']}")
         print(f"  Mentions checked: {self.session_stats['mentions_checked']}")
         print(f"  Engagements made: {self.session_stats['engagements_made']}")
@@ -608,6 +676,8 @@ def main():
     parser = argparse.ArgumentParser(description='SME Social Media Bot')
     parser.add_argument('--test', action='store_true', help='Test mode - generate content only')
     parser.add_argument('--posting-only', action='store_true', help='Posting-only mode - skips retrieval functions to save quota')
+    parser.add_argument('--weekly-engagement', action='store_true', help='Weekly full engagement mode - processes mentions from past 7 days')
+    parser.add_argument('--multi-platform', action='store_true', default=True, help='Post to both Twitter and LinkedIn')
     parser.add_argument('--viral-test', action='store_true', help='Test viral prediction system')
     parser.add_argument('--viral-analyze', type=str, help='Analyze viral potential of a specific tweet')
     args = parser.parse_args()
@@ -663,10 +733,16 @@ def main():
             else:
                 print("❌ Content generation failed")
         else:
-            bot = SMESocialBot()
-            # Check if we should run in posting-only mode
-            posting_only = args.posting_only or datetime.now() < datetime(2025, 8, 11)
-            bot.run_daily_automation(posting_only=posting_only)
+            bot = SMESocialBot(multi_platform=args.multi_platform)
+            
+            # Determine mode
+            if args.weekly_engagement:
+                print("📅 Weekly engagement mode - processing all mentions from past week")
+                bot.run_daily_automation(posting_only=False, weekly_engagement=True, multi_platform=args.multi_platform)
+            else:
+                # Check if we should run in posting-only mode (until Aug 11 or manual override)
+                posting_only = args.posting_only or datetime.now() < datetime(2025, 8, 11)
+                bot.run_daily_automation(posting_only=posting_only, multi_platform=args.multi_platform)
             
     except KeyboardInterrupt:
         print("\n🛑 Bot stopped by user")

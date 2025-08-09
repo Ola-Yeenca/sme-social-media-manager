@@ -1,7 +1,8 @@
-# SME Social Media Bot - Minimal Dependencies
-# Only 6 packages needed for a working social media bot
+# SME Social Media Bot - Multi-platform Dependencies
+# Essential packages for Twitter + LinkedIn automation
 
 tweepy>=4.14.0          # Twitter API wrapper
+linkedin-api>=2.0.0     # LinkedIn API integration
 openai>=1.0.0           # AI content generation (primary)
 anthropic>=0.25.0       # AI content generation (fallback)
 groq>=0.4.0             # AI content generation (fallback)

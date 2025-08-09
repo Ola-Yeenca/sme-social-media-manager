@@ -1,0 +1,140 @@
+name: SME Social Media Bot - Complete Automation
+
+# Run 4 times daily (every 6 hours) + weekly full engagement
+on:
+  schedule:
+    - cron: '0 6,12,18,0 * * *'    # 6 AM, 12 PM, 6 PM, 12 AM UTC (daily posting)
+    - cron: '0 8 * * 0'            # 8 AM UTC every Sunday (weekly full engagement)
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Bot mode'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto              # Smart mode based on date/time
+          - posting-only      # Only post content (saves API quota)
+          - full             # Full engagement (mentions + posting)
+          - weekly           # Weekly full engagement mode
+          - viral-test       # Test viral prediction system
+
+jobs:
+  social-media-automation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10  # Extended timeout for LinkedIn integration
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Determine bot mode
+      id: mode
+      run: |
+        MODE="${{ github.event.inputs.mode || 'auto' }}"
+        
+        # Auto mode logic
+        if [ "$MODE" = "auto" ]; then
+          # Check if it's Sunday 8 AM (weekly full engagement)
+          if [ "$(date -u +%u)" = "7" ] && [ "$(date -u +%H)" = "8" ]; then
+            MODE="weekly"
+          else
+            # Regular posting-only mode until Aug 11, 2025
+            if [ "$(date -u +%Y-%m-%d)" \< "2025-08-11" ]; then
+              MODE="posting-only"
+            else
+              MODE="full"
+            fi
+          fi
+        fi
+        
+        echo "mode=$MODE" >> $GITHUB_OUTPUT
+        echo "📋 Selected mode: $MODE"
+    
+    - name: Run SME Social Media Bot
+      env:
+        # Twitter API credentials (required)
+        TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+        TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+        TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        
+        # LinkedIn API credentials (required for LinkedIn posting)
+        LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+        LINKEDIN_ORGANIZATION_ID: ${{ secrets.LINKEDIN_ORGANIZATION_ID }}
+        
+        # AI Provider (required - fallback chain)
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        
+        # Optional integrations
+        NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        SOCIAL_MEDIA_DB_ID: ${{ secrets.SOCIAL_MEDIA_DB_ID }}
+        
+      run: |
+        echo "🤖 Starting SME Social Media Bot..."
+        echo "⏰ Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "📋 Mode: ${{ steps.mode.outputs.mode }}"
+        echo "🌐 Platforms: Twitter + LinkedIn"
+        echo "🎯 Features: Viral Prediction + Multi-platform Posting"
+        echo "=" * 60
+        
+        case "${{ steps.mode.outputs.mode }}" in
+          "posting-only")
+            echo "🔒 POSTING-ONLY MODE: Content creation with viral prediction"
+            echo "📅 Saves API quota - full engagement resumes Aug 11 or Sundays"
+            python bot.py --posting-only --multi-platform
+            ;;
+          "full")
+            echo "🚀 FULL MODE: Complete automation (posting + engagement)"
+            python bot.py --multi-platform
+            ;;
+          "weekly")
+            echo "📅 WEEKLY MODE: Full engagement + mention responses"
+            echo "🔄 Processing all mentions from the past week..."
+            python bot.py --weekly-engagement --multi-platform
+            ;;
+          "viral-test")
+            echo "🧪 VIRAL TEST MODE: Testing prediction system"
+            python bot.py --viral-test
+            ;;
+          *)
+            echo "❓ Unknown mode, defaulting to posting-only"
+            python bot.py --posting-only --multi-platform
+            ;;
+        esac
+        
+        echo "✅ Bot run complete!"
+    
+    - name: Upload logs and artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: bot-logs-${{ github.run_number }}
+        path: |
+          *.log
+          viral_scores.json
+        retention-days: 7
+
+    - name: Post run summary
+      if: always()
+      run: |
+        echo "📊 Run Summary:"
+        echo "  Mode: ${{ steps.mode.outputs.mode }}"
+        echo "  Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "  Status: ${{ job.status }}"
+        echo "  Artifacts: Available for 7 days"
