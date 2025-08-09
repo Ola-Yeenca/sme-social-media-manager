@@ -15,6 +15,7 @@ import tweepy
 import openai
 import groq
 from config import Config
+from viral_predictor import ViralTweetPredictor, ViralScore
 
 
 class SMESocialBot:
@@ -32,12 +33,17 @@ class SMESocialBot:
             
         self.setup_ai()
         
+        # Initialize viral predictor
+        self.viral_predictor = ViralTweetPredictor()
+        print("✅ Viral prediction system initialized")
+        
         # Simple tracking
         self.session_stats = {
             'posts_created': 0,
             'mentions_checked': 0,
             'engagements_made': 0,
-            'errors': 0
+            'errors': 0,
+            'viral_predictions': 0
         }
         
     def setup_twitter(self):
@@ -204,10 +210,34 @@ class SMESocialBot:
             return fallback
     
     def post_content(self, content: str) -> bool:
-        """Post content to Twitter"""
+        """Post content to Twitter with viral prediction"""
         try:
             if not content:
                 return False
+            
+            # Predict viral potential before posting
+            viral_score = self.viral_predictor.predict_viral_potential(content)
+            self.session_stats['viral_predictions'] += 1
+            
+            print(f"\n📊 Viral Prediction Score: {viral_score.total_score}/100")
+            print(f"   Predicted Likes: {viral_score.predicted_engagement['likes']}")
+            print(f"   Predicted Retweets: {viral_score.predicted_engagement['retweets']}")
+            print(f"   Confidence: {viral_score.confidence}%")
+            
+            # If score is low, try to optimize
+            if viral_score.total_score < 70:
+                print("🔧 Score below 70, optimizing tweet...")
+                optimized_content, new_score = self.viral_predictor.optimize_tweet(content)
+                if new_score.total_score > viral_score.total_score:
+                    print(f"✨ Optimization improved score: {viral_score.total_score} → {new_score.total_score}")
+                    content = optimized_content
+                    viral_score = new_score
+            
+            # Show recommendations if any
+            if viral_score.recommendations:
+                print("💡 Recommendations for next time:")
+                for rec in viral_score.recommendations[:3]:
+                    print(f"   - {rec}")
             
             # Check if we're rate limited
             if hasattr(self, 'rate_limited') and self.rate_limited:
@@ -222,6 +252,7 @@ class SMESocialBot:
                 print(f"✅ POSTED LIVE: {content[:50]}...")
                 print(f"   Full content: {content}")
                 print(f"   Tweet ID: {response.data['id']}")
+                print(f"   Viral Score: {viral_score.total_score}/100")
                 self.session_stats['posts_created'] += 1
                 return True
             else:
@@ -237,6 +268,46 @@ class SMESocialBot:
             print(f"❌ Posting failed: {e}")
             self.session_stats['errors'] += 1
             return False
+    
+    def generate_viral_content(self, base_idea: str = None) -> List[tuple]:
+        """Generate multiple viral tweet variations"""
+        if not base_idea:
+            base_idea = "SME Analytica helps restaurants increase revenue with data-driven insights"
+        
+        print("\n🚀 Generating viral tweet variations...")
+        variations = self.viral_predictor.generate_viral_variations(base_idea, count=3)
+        
+        print(f"\n📊 Generated {len(variations)} viral variations:")
+        for i, (tweet, score) in enumerate(variations, 1):
+            print(f"\nVariation {i} (Score: {score.total_score}/100):")
+            print(f"   {tweet[:100]}..." if len(tweet) > 100 else f"   {tweet}")
+            print(f"   Predicted: {score.predicted_engagement['likes']} likes, {score.predicted_engagement['retweets']} RTs")
+        
+        return variations
+    
+    def post_best_viral_content(self) -> bool:
+        """Generate viral variations and post the best one"""
+        try:
+            # Generate base content first
+            base_content = self.generate_content()
+            
+            # Generate viral variations
+            variations = self.generate_viral_content(base_content)
+            
+            if variations:
+                # Post the best one (first in sorted list)
+                best_tweet, best_score = variations[0]
+                print(f"\n🎯 Posting best variation with score {best_score.total_score}/100")
+                return self.post_content(best_tweet)
+            else:
+                # Fallback to regular posting
+                return self.post_content(base_content)
+                
+        except Exception as e:
+            print(f"❌ Viral content generation failed: {e}")
+            # Fallback to regular content
+            content = self.generate_content()
+            return self.post_content(content)
     
     def check_mentions(self) -> List[Dict]:
         """Check for mentions and replies"""
@@ -486,15 +557,21 @@ class SMESocialBot:
         
         # 1. Generate and post content (2-3 posts) - ALWAYS RUNS
         posts_to_create = random.choice([2, 3])
-        print(f"\n📝 Creating {posts_to_create} posts...")
+        print(f"\n📝 Creating {posts_to_create} posts with viral optimization...")
         
         for i in range(posts_to_create):
-            content = self.generate_content()
-            if content:
-                success = self.post_content(content)
-                if success and i < posts_to_create - 1:
-                    # Wait between posts
-                    time.sleep(60)  # 1 minute between posts
+            # Use viral prediction for first post, regular for others
+            if i == 0:
+                print("\n🎯 Using viral prediction for first post...")
+                success = self.post_best_viral_content()
+            else:
+                content = self.generate_content()
+                if content:
+                    success = self.post_content(content)
+            
+            if success and i < posts_to_create - 1:
+                # Wait between posts
+                time.sleep(60)  # 1 minute between posts
         
         if not posting_only:
             # 2. Check and engage with mentions - SKIPPED IN POSTING-ONLY MODE
@@ -516,6 +593,7 @@ class SMESocialBot:
         # 4. Show results
         print(f"\n📊 Session Results:")
         print(f"  Posts created: {self.session_stats['posts_created']}")
+        print(f"  Viral predictions: {self.session_stats['viral_predictions']}")
         print(f"  Mentions checked: {self.session_stats['mentions_checked']}")
         print(f"  Engagements made: {self.session_stats['engagements_made']}")
         print(f"  Errors: {self.session_stats['errors']}")
@@ -530,10 +608,53 @@ def main():
     parser = argparse.ArgumentParser(description='SME Social Media Bot')
     parser.add_argument('--test', action='store_true', help='Test mode - generate content only')
     parser.add_argument('--posting-only', action='store_true', help='Posting-only mode - skips retrieval functions to save quota')
+    parser.add_argument('--viral-test', action='store_true', help='Test viral prediction system')
+    parser.add_argument('--viral-analyze', type=str, help='Analyze viral potential of a specific tweet')
     args = parser.parse_args()
     
     try:
-        if args.test:
+        if args.viral_test:
+            print("🧪 Testing Viral Prediction System...")
+            from viral_predictor import ViralTweetPredictor
+            predictor = ViralTweetPredictor()
+            
+            test_tweets = [
+                "Just launched our new analytics dashboard for SMEs!",
+                "🚀 Game-changer: AI-powered analytics that boost revenue by 47% on average. Who's ready to transform their business? #AI #Business #Growth",
+                "Unpopular opinion: Most businesses waste 80% of their data. Here's how to fix it: 🧵"
+            ]
+            
+            for tweet in test_tweets:
+                print(f"\n📝 Tweet: {tweet[:80]}...")
+                score = predictor.predict_viral_potential(tweet)
+                print(f"📊 Viral Score: {score.total_score}/100")
+                print(f"👍 Predicted: {score.predicted_engagement['likes']} likes, {score.predicted_engagement['retweets']} RTs")
+                
+        elif args.viral_analyze:
+            print(f"🔬 Analyzing viral potential...")
+            from viral_predictor import ViralTweetPredictor
+            predictor = ViralTweetPredictor()
+            score = predictor.predict_viral_potential(args.viral_analyze)
+            
+            print(f"\n📊 Viral Score: {score.total_score}/100")
+            print(f"\nBreakdown:")
+            print(f"  Content: {score.content_score}/100")
+            print(f"  Timing: {score.timing_score}/100")
+            print(f"  Hashtags: {score.hashtag_score}/100")
+            print(f"  Engagement: {score.engagement_score}/100")
+            print(f"  Trends: {score.trend_score}/100")
+            print(f"\nPredicted Engagement:")
+            print(f"  Likes: {score.predicted_engagement['likes']}")
+            print(f"  Retweets: {score.predicted_engagement['retweets']}")
+            print(f"  Replies: {score.predicted_engagement['replies']}")
+            print(f"  Impressions: {score.predicted_engagement['impressions']}")
+            
+            if score.recommendations:
+                print(f"\n💡 Recommendations:")
+                for rec in score.recommendations:
+                    print(f"  - {rec}")
+                    
+        elif args.test:
             print("🧪 Test mode - generating sample content...")
             bot = SMESocialBot(test_mode=True)
             content = bot.generate_content()

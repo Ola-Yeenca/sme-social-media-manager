@@ -1,0 +1,48 @@
+# Testing Requirements for SME Social Media Bot
+# Includes all dependencies needed for comprehensive testing
+
+# Core application dependencies
+tweepy>=4.14.0          # Twitter API wrapper
+openai>=1.0.0           # AI content generation (primary)
+anthropic>=0.25.0       # AI content generation (fallback)
+groq>=0.4.0             # AI content generation (fallback)
+python-dotenv>=1.0.0    # Environment variable loading
+requests>=2.31.0        # HTTP requests (dependency)
+
+# Testing frameworks
+pytest>=7.4.0           # Modern testing framework
+pytest-asyncio>=0.21.0  # Async testing support
+pytest-mock>=3.11.0     # Advanced mocking capabilities
+pytest-cov>=4.1.0       # Code coverage reporting
+pytest-html>=3.2.0      # HTML test reports
+pytest-timeout>=2.1.0   # Test timeout handling
+
+# Playwright for E2E testing
+playwright>=1.40.0       # Browser automation for E2E tests
+pytest-playwright>=0.4.0 # Pytest integration for Playwright
+
+# Mocking and fixtures
+responses>=0.23.0        # HTTP request mocking
+freezegun>=1.2.0        # Time freezing for consistent testing
+factory-boy>=3.3.0      # Test data generation
+faker>=20.0.0           # Fake data generation
+
+# Code quality and analysis
+coverage>=7.3.0          # Code coverage measurement
+flake8>=6.0.0           # Code style checking
+black>=23.0.0           # Code formatting
+isort>=5.12.0           # Import sorting
+mypy>=1.6.0             # Type checking
+
+# Performance testing
+pytest-benchmark>=4.0.0 # Performance benchmarking
+memory-profiler>=0.61.0 # Memory usage profiling
+
+# CI/CD and reporting
+pytest-json-report>=1.5.0  # JSON test reports for CI
+pytest-xdist>=3.3.0       # Parallel test execution
+allure-pytest>=2.13.0     # Advanced test reporting
+
+# Development utilities
+tox>=4.11.0             # Testing across environments
+pre-commit>=3.5.0       # Git hooks for code quality
