@@ -125,24 +125,41 @@ class SMESocialBot:
         sys.exit(1)
     
     def generate_content(self) -> str:
-        """Generate social media content using AI"""
+        """Generate social media content using dynamic data sources"""
         
+        # Try dynamic content generation first
+        try:
+            from dynamic_content import DynamicContentEngine
+            engine = DynamicContentEngine()
+            
+            # Generate dynamic content from real sources
+            dynamic_content = engine.generate_dynamic_content()
+            
+            # If we got good dynamic content, use it directly
+            if dynamic_content and len(dynamic_content) > 50:
+                print("🎯 Using dynamic real-time content")
+                return dynamic_content
+                
+        except Exception as e:
+            print(f"⚠️ Dynamic content generation failed: {e}")
+        
+        # Fallback to AI generation with better prompts
         business_context = """
-        SME Analytica provides MenuFlow dynamic pricing for restaurants, hotels, and retail businesses.
-        We help small businesses optimize pricing, increase margins (~10%), and make data-driven decisions.
-        Our platform integrates with POS systems and provides real-time analytics.
-        Target audience: Restaurant owners, hotel managers, small business entrepreneurs in Europe.
+        You are the head of data analytics at SME Analytica, a cutting-edge restaurant tech company.
+        You're passionate about data, obsessed with helping restaurants thrive, and you speak like a tech founder.
+        Be specific, use real numbers, share insider knowledge. You're building the future of restaurant analytics.
+        Sometimes contrarian, always data-driven. Mix technical insights with business impact.
         """
         
-        content_prompts = [
-            "Write a helpful tip for restaurant owners about pricing strategy. Include a practical insight. Keep it under 280 characters. End with 1-2 relevant emojis.",
-            "Share an interesting statistic about how dynamic pricing helps restaurants increase profits. Make it engaging and educational. Under 280 characters with emojis.",
-            "Create a short post about the importance of data-driven decisions for small businesses. Include a question to encourage engagement. Under 280 characters.",
-            "Write about a common mistake restaurant owners make with menu pricing and how to avoid it. Helpful and informative tone. Under 280 characters with emojis."
-        ]
+        # Import advanced content generator for better prompts
+        try:
+            from content_generator import get_dynamic_content_prompt
+            prompt = get_dynamic_content_prompt()
+        except:
+            # Ultimate fallback
+            prompt = "Write a data-driven insight about restaurant analytics. Be specific, technical, and engaging. Under 280 chars."
         
         try:
-            prompt = random.choice(content_prompts)
             content = None
 
             # 1. Try OpenAI

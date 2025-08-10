@@ -4,233 +4,253 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🎯 Project Overview
 
-**SME Analytica Social Media Manager** - AI-powered social media automation system designed to grow SME Analytica's Twitter presence from 8 to 1,000+ followers through strategic content creation, engagement automation, and data-driven optimization.
+**SME Social Media Manager** - AI-powered multi-platform social media automation system with viral prediction capabilities. Automates Twitter and LinkedIn posting, engagement, and content optimization for SME Analytica, designed to grow followers through data-driven viral content strategies.
 
-## 🚀 Quick Commands
+## 🚀 Core Development Commands
 
-### Core Development Commands
+### Bot Operations
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Run full automation (production mode)
-python main.py
+# Run bot in different modes
+python bot.py                           # Auto mode (smart scheduling)
+python bot.py --posting-only             # Content-only (saves API quota)
+python bot.py --weekly-engagement        # Full engagement mode (mentions + posting)
+python bot.py --multi-platform           # Post to both Twitter + LinkedIn
+python bot.py --test                     # Test mode (no API calls)
 
-# Run specific modes
-python main.py --mode=enhanced    # Full AI-powered automation
-python main.py --mode=smart       # Intelligent decision making
-python main.py --mode=content     # Generate content only
-python main.py --mode=engagement  # Run engagement automation
-python main.py --mode=analytics   # Run analytics only
-python main.py --mode=ai_council  # AI Council collaborative content
-python main.py --mode=ai_agent    # Continuous AI monitoring
+# Viral prediction system
+python bot.py --viral-test               # Test viral prediction algorithms
+python bot.py --viral-analyze "tweet"    # Analyze specific tweet potential
+python viral_predictor.py               # Run viral prediction demo
 
-# Check system status
-python main.py --status
+# LinkedIn integration
+python linkedin_manager.py              # Test LinkedIn connection and posting
 
-# Test locally with .env file
-cp .env.example .env  # Edit with your API keys
-python main.py --mode=content
+# Configuration testing
+python config.py                        # Validate environment variables
+python -c "from config import Config; print(Config().get_status())"
 ```
 
-### GitHub Actions Automation
-- **Automatic runs**: Daily at 8 AM UTC + every 6 hours
-- **Manual trigger**: Go to Actions → "SME Analytica Social Media Automation" → Run workflow
-- **Workflow file**: `.github/workflows/social-media-automation.yml`
-
-## 🔧 Required Environment Variables
-
-### Core API Keys (Required)
+### Testing Suite
 ```bash
+# Install test dependencies
+pip install -r requirements_test.txt
+playwright install chromium
+
+# Run all tests
+python run_all_tests.py                 # Complete test suite with reports
+
+# Run specific test categories
+python test_viral_prediction.py         # Unit tests for viral algorithms
+python test_bot_integration.py          # Integration tests (mocked APIs)
+python test_e2e_playwright.py           # End-to-end browser automation
+python demo_tests.py                    # Interactive demo system
+```
+
+### GitHub Actions
+- **Workflow**: `.github/workflows/sme-social-bot.yml` (single consolidated workflow)
+- **Daily runs**: 6 AM, 12 PM, 6 PM, 12 AM UTC (posting-only mode)
+- **Weekly runs**: Sunday 8 AM UTC (full engagement mode)
+- **Manual trigger**: GitHub Actions interface with mode selection
+
+## 🏗️ Architecture Overview
+
+### Core System Design
+The bot uses a modular architecture centered around three main components:
+
+**SMESocialBot** (`bot.py`) - Main orchestration class that:
+- Manages multi-platform posting (Twitter + LinkedIn)
+- Coordinates AI content generation with viral optimization
+- Handles rate limiting and API quota management
+- Implements intelligent scheduling (daily posts vs weekly engagement)
+
+**ViralTweetPredictor** (`viral_predictor.py`) - Predictive content optimization:
+- Scores content 0-100 based on viral characteristics
+- Analyzes: content quality, timing, hashtags, engagement potential, trends
+- Generates optimized variations and recommendations
+- Platform-specific optimization (Twitter vs LinkedIn)
+
+**LinkedInManager** (`linkedin_manager.py`) - Professional platform integration:
+- Adapts Twitter content for LinkedIn's professional context
+- Applies LinkedIn-specific viral prediction adjustments
+- Handles LinkedIn API authentication and posting
+
+### AI Integration Chain
+The system uses a cascading AI fallback strategy:
+1. **OpenAI GPT** (primary) - for content generation
+2. **Anthropic Claude** (fallback 1) - if OpenAI fails  
+3. **Groq** (fallback 2) - if both fail
+
+Content generation prompts are business-focused for restaurant/SME audience with Spanish/English bilingual support.
+
+### Rate Limiting Strategy
+**Current Implementation (until Aug 11, 2025):**
+- **Daily mode**: Posting-only (0 API retrievals, 3-4 posts)
+- **Sunday mode**: Full engagement (mentions + search + posting, ~12 retrievals)
+- **Monthly quota**: 12/100 retrievals used, 100/500 posts used
+
+This strategy prevents API quota exhaustion while maintaining consistent posting.
+
+## 🔧 Environment Configuration
+
+### Required API Keys
+```bash
+# Twitter API (Required)
 TWITTER_API_KEY=
 TWITTER_API_SECRET=
 TWITTER_ACCESS_TOKEN=
 TWITTER_ACCESS_TOKEN_SECRET=
 TWITTER_BEARER_TOKEN=
-NOTION_API_KEY=
-SOCIAL_MEDIA_DB_ID=
+
+# AI Providers (At least one required)
+OPENAI_API_KEY=              # Primary AI provider
+ANTHROPIC_API_KEY=           # Fallback AI provider
+GROQ_API_KEY=                # Fallback AI provider
+
+# LinkedIn Integration (Optional)
+LINKEDIN_ACCESS_TOKEN=       # For LinkedIn posting
+LINKEDIN_ORGANIZATION_ID=    # For company page posting
+
+# Optional Services
+NOTION_API_KEY=             # Analytics storage
+SOCIAL_MEDIA_DB_ID=         # Notion database ID
 ```
 
-### Optional AI Providers
+### Configuration Validation
+The `Config` class (`config.py`) validates all environment variables on startup and provides fallback chains for AI providers. Use `python config.py` to test configuration.
+
+## 🧪 Testing Architecture
+
+### Test Categories
+**Unit Tests** (`test_viral_prediction.py`):
+- Viral score calculation algorithms
+- Content optimization functions
+- Hashtag and timing analysis
+- Engagement prediction models
+
+**Integration Tests** (`test_bot_integration.py`):
+- Bot initialization with mocked APIs
+- Multi-platform posting workflows  
+- AI provider fallback chains
+- Rate limiting behavior
+
+**End-to-End Tests** (`test_e2e_playwright.py`):
+- Complete workflow simulation with browser automation
+- GitHub Actions workflow validation
+- API mocking with request interception
+- Cross-platform content adaptation
+
+### Test Runner
+`run_all_tests.py` orchestrates all test suites and generates JSON reports in `./test-results/`. It provides comprehensive coverage analysis and performance benchmarks.
+
+## 📊 Viral Prediction System
+
+### Scoring Algorithm
+The viral predictor uses weighted scoring across 5 dimensions:
+- **Content (30%)**: Emotional triggers, power words, call-to-actions, length optimization
+- **Engagement (25%)**: Questions, personal stories, controversial topics, lists
+- **Timing (15%)**: Optimal posting hours (8am, 12pm, 5pm, 8pm UTC)
+- **Hashtags (15%)**: Quality and quantity (2-4 optimal), trending topic alignment  
+- **Trends (15%)**: Alignment with current business/AI/productivity topics
+
+### Content Optimization
+When viral scores are below 70/100, the system automatically:
+1. Adds trending hashtags from tiered quality lists
+2. Includes engagement-driving questions
+3. Optimizes length for platform (140-200 chars Twitter, 300+ LinkedIn)
+4. Adds emotional triggers and power words
+
+### Platform Adaptation
+LinkedIn content receives professional context adjustments:
+- Hashtag expansion (#AI → #ArtificialIntelligence #AI)
+- Professional call-to-actions
+- Business hours timing optimization  
+- Extended content length support
+
+## 🚨 Critical API Quota Management
+
+### Current Status (Fixed August 9, 2025)
+- **GitHub Workflow**: ✅ Fixed sync issue with consolidated `sme-social-bot.yml`
+- **Dependency Issue**: ✅ Resolved `grok` → `groq` package correction
+- **LinkedIn Integration**: ✅ Active and posting-ready
+- **Viral Prediction**: ✅ Integrated with both Twitter and LinkedIn
+
+### Production Behavior
+The bot automatically switches modes based on date/time:
+- **Until Aug 11**: Posting-only mode (4 posts/day, 0 retrievals)  
+- **Sundays**: Full engagement (mentions + posting, ~12 retrievals)
+- **After Aug 11**: Weekly engagement strategy (Sunday full mode only)
+
+### Monitoring Commands
 ```bash
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-GOOGLE_GEMINI_API_KEY=
-GROK_API_KEY=
-PERPLEXITY_API_KEY=
+# Check bot status
+python bot.py --test                    # Validate without API calls
+
+# Monitor API usage
+python check_rate_limit.py             # Check current rate limits
+
+# Test platform connections
+python linkedin_manager.py             # Verify LinkedIn integration
+python -c "import tweepy; print('Twitter lib OK')"
 ```
 
-### LinkedIn Integration (Optional)
-```bash
-LINKEDIN_ACCESS_TOKEN=
-LINKEDIN_ORGANIZATION_ID=
-```
+## 🎯 Content Strategy
 
-## 🏗️ Architecture Overview
+### Audience Targeting
+- **Primary**: Restaurant owners, hospitality managers
+- **Secondary**: Small business owners, retail managers  
+- **Geographic**: Europe (Madrid timezone), Spanish/English bilingual
+- **Content Focus**: Data-driven business insights, pricing optimization, profit margins
 
-### Core Components
-- **main.py**: Entry point with multiple automation modes
-- **src/social_media_manager.py**: Enhanced AI-powered content generation
-- **src/content/**: Content generation and optimization systems
-- **src/engagement/**: Community engagement and automation
-- **src/analytics/**: Performance tracking and reporting
-- **src/social/**: Twitter and LinkedIn API integrations
-- **src/ai_agent/**: Intelligent AI engagement systems
-- **src/ai_council/**: Collaborative AI content creation
+### Viral Content Patterns
+The system is trained on these high-engagement patterns:
+- **Questions**: Drive comments and engagement
+- **Data/Statistics**: "47% revenue increase", "Most restaurants waste 80% of data"
+- **Professional insights**: Business tips, industry trends, growth strategies
+- **Controversial opinions**: "Unpopular opinion: Most businesses...", "Hot take: Dynamic pricing..."
 
-### Key Systems
-- **TwitterManager**: Handles Twitter API interactions
-- **LinkedInManager**: Handles LinkedIn API interactions
-- **ContentGenerator**: AI-powered content creation
-- **EngagementAutomation**: Automated liking, retweeting, following
-- **AnalyticsDashboard**: Performance tracking and insights
-- **NotionManager**: Content database and analytics storage
+### Multi-Platform Strategy  
+- **Twitter**: Concise insights with trending hashtags, real-time engagement
+- **LinkedIn**: Professional context, expanded explanations, business networking focus
+- **Cross-posting**: Automatic adaptation with platform-specific optimization
 
-### Data Flow
-1. **Content Generation**: AI creates viral content based on business context
-2. **Multi-platform Posting**: Posts to Twitter and LinkedIn simultaneously
-3. **Community Engagement**: Automated engagement with target accounts
-4. **Analytics Tracking**: Performance metrics stored in Notion
-5. **AI Council**: Collaborative content review and optimization
-
-## 📊 Content Strategy
-
-### Content Pillars
-- **Educational (40%)**: Data insights and business tips
-- **Community (25%)**: Industry discussions and engagement
-- **Promotional (20%)**: Product features and benefits
-- **Industry (15%)**: Market trends and insights
-
-### Posting Schedule
-- **6-12 posts/day** across platforms
-- **Optimal times**: 8 AM, 12 PM, 5 PM, 8 PM UTC (Madrid timezone)
-- **4-week growth strategy**: 8 → 50 → 150 → 300 → 500+ followers
-
-## 🎯 Target Audience
-
-**Primary**: Restaurant owners and hospitality managers
-**Secondary**: Small business entrepreneurs, retail owners
-**Geographic**: Europe (Madrid timezone focus), Spanish/English bilingual
-
-## 📁 Key Files & Directories
+## 📁 Key File Structure
 
 ```
-src/
-├── ai_agent/          # Intelligent AI engagement systems
-├── ai_council/        # Collaborative AI content creation
-├── ai_providers/      # Multiple AI service integrations
-├── analytics/         # Performance tracking
-├── community/         # Influencer targeting & engagement
-├── content/           # Content generation systems
-├── engagement/        # Social media engagement automation
-├── notion/            # Notion database integration
-├── social/            # Twitter/LinkedIn API wrappers
-└── strategy/          # Hashtag intelligence & optimization
+sme_social_manager/
+├── bot.py                     # Main bot orchestration 
+├── viral_predictor.py         # Viral content prediction system
+├── linkedin_manager.py        # LinkedIn platform integration
+├── config.py                  # Environment configuration management
+├── requirements.txt           # Core dependencies (Twitter, LinkedIn, AI)
+├── requirements_test.txt      # Testing dependencies (Playwright, etc.)
+├── .github/workflows/
+│   └── sme-social-bot.yml     # Single consolidated workflow
+├── test_*.py                  # Test suite files
+├── run_all_tests.py           # Master test runner
+└── demo_tests.py              # Interactive demo system
 ```
 
 ## 🔄 Development Workflow
 
-### Local Development
-1. Clone repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Create `.env` file with required API keys
-4. Test locally: `python main.py --mode=content`
-5. Push to GitHub for cloud automation
+### Local Testing
+1. `cp .env.example .env` and configure API keys
+2. `python bot.py --test` to validate setup
+3. `python bot.py --viral-test` to test prediction system
+4. `python bot.py --posting-only --multi-platform` for full simulation
 
-### Testing
-```bash
-# Run comprehensive system test
-python comprehensive_system_test.py
+### Production Deployment
+1. Configure GitHub Secrets with all required API keys
+2. Push to main branch triggers workflow validation
+3. Monitor GitHub Actions for successful runs
+4. Check artifacts for execution logs and viral scores
 
-# Test individual components
-python test_hashtag_system.py
-python test_engagement.py
-python test_workflow.py
-```
-
-### Monitoring
-- **GitHub Actions**: Check Actions tab for automation runs
-- **Logs**: Download from artifacts after each run
-- **Analytics**: Check Notion database for performance metrics
-- **Twitter**: Monitor @SMEAnalytica for live posts
-
-## 🚨 Troubleshooting
-
-### Common Issues
-1. **Missing API keys**: Check GitHub Secrets setup
-2. **Rate limiting**: Monitor Twitter API usage in logs
-3. **Environment issues**: Ensure all required directories exist
-4. **Content validation**: Check content generation logs
-
-### Debug Commands
-```bash
-# Check environment validation
-python main.py --status
-
-# Run with verbose logging
-python main.py --mode=content --quiet=false
-
-# Check specific components
-python -c "from src.social.twitter_manager import TwitterManager; print('Twitter OK')"
-python -c "from src.notion.notion_manager import NotionManager; print('Notion OK')"
-```
-
-## 📝 Content Quality Guidelines
-
-- **Voice**: Conversational expert, helpful consultant tone
-- **Length**: Twitter (280 chars), LinkedIn (300-500 chars)
-- **Hashtags**: 3-5 relevant hashtags per post
+### Content Quality Assurance
+- **Voice**: Conversational expert, data-driven consultant  
 - **Languages**: 70% English, 30% Spanish
-- **Focus**: Practical value for restaurant/small business owners
+- **Hashtags**: 2-4 relevant business/tech hashtags per post
+- **Value Focus**: Practical insights for restaurant/SME profit optimization
 
-## 🚨 CRITICAL: GitHub Actions Workflow Fixed (August 9, 2025)
-
-### Issue Resolution - Workflow Failures
-- **Problem**: Bot failing within 2-9 seconds due to wrong `grok` package dependency
-- **Root Cause**: `requirements.txt` installed Zope web framework instead of Groq AI client
-- **Fix Applied**: Replaced `grok>=0.4.0` with `groq>=0.4.0` and updated imports
-- **Status**: ✅ RESOLVED - Bot now initializes correctly in local tests
-- **Remaining**: Verify GitHub Secrets configuration for production deployment
-
-### Files Updated:
-- `requirements.txt`: Fixed Groq package dependency
-- `bot.py`: Updated imports and client initialization
-- `CHANGELOG.md`: Created agent task tracking system
-
-## 🚨 CRITICAL: Twitter API Quota Management (IMPLEMENTED July 30, 2025)
-
-### Current Production Setup
-- **Bot Status**: ✅ PRODUCTION READY - Posts 3-4 times daily
-- **Current Mode**: Posting-only until August 11, 2025 
-- **API Limits**: Free tier - 500 posts/month (✅ plenty), 100 retrievals/month (❌ exceeded at 103/100)
-
-### Automatic Behavior
-- **Until Aug 11**: Bot automatically runs in posting-only mode (no retrievals)
-- **After Aug 11**: Bot will implement Weekly Engagement Strategy
-
-### Weekly Engagement Strategy (SELECTED - Implement Aug 11)
-```bash
-# SUNDAY: Full functionality (mentions + search + posting) = 12 retrievals
-# MON-SAT: Posting-only mode = 0 retrievals  
-# MONTHLY TOTAL: 12/100 retrievals (88 buffer remaining)
-# DAILY POSTS: 3-4 posts every day (21-28 posts/week)
-```
-
-### Implementation Required Aug 11:
-1. Update `.github/workflows/daily-bot.yml` to run full mode only on Sundays
-2. Modify bot logic to check `datetime.now().weekday() == 6` for Sunday
-3. Monitor Twitter Developer Portal for actual usage
-4. Adjust if needed based on real consumption
-
-### Files to Remember:
-- `bot.py` - Main bot with posting-only mode implemented
-- `API_QUOTA_MANAGEMENT.md` - Complete documentation and strategies
-- `check_rate_limit.py` - Debugging tool for API limits
-- `.github/workflows/daily-bot.yml` - Updated with smart mode selection
-
-### Key Insight:
-- **Posting** (500/month): Bot uses ~100/month ✅ PLENTY AVAILABLE
-- **Retrieving** (100/month): Bot was using 480/month ❌ MAJOR OVERAGE
-- **Solution**: Reduce retrieval frequency, maintain posting frequency
-
-The bot is production-ready and posting content daily. Weekly engagement strategy will be implemented August 11th to work within free API limits permanently.
+The bot maintains a consistent brand voice while adapting content tone and complexity for each platform's professional context.
