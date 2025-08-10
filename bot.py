@@ -631,26 +631,12 @@ class SMESocialBot:
         print("🚀 Starting bot operations...")
         self.rate_limited = False  # Start optimistically
         
-        # 1. Generate and post content (2-3 posts) - ALWAYS RUNS
-        posts_to_create = random.choice([2, 3])
-        print(f"\n📝 Creating {posts_to_create} posts with viral optimization...")
+        # 1. Generate and post ONE unique content piece - Natural posting frequency
+        print(f"\n📝 Creating one dynamic post with viral optimization...")
         
-        for i in range(posts_to_create):
-            # Use viral prediction for first post, regular for others
-            if i == 0:
-                print("\n🎯 Using viral prediction for first post...")
-                success = self.post_best_viral_content(multi_platform=multi_platform)
-            else:
-                content = self.generate_content()
-                if content:
-                    if multi_platform:
-                        success = self.post_multi_platform(content)
-                    else:
-                        success = self.post_content(content)
-            
-            if success and i < posts_to_create - 1:
-                # Wait between posts
-                time.sleep(60)  # 1 minute between posts
+        # Always use viral prediction for single post
+        print("\n🎯 Using viral prediction and dynamic content generation...")
+        success = self.post_best_viral_content(multi_platform=multi_platform)
         
         if not posting_only or weekly_engagement:
             # 2. Check and engage with mentions
