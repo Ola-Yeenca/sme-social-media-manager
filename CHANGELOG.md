@@ -2,6 +2,22 @@
 
 ## SME Social Media Manager - Agent Task Tracking
 
+### 2025-08-10 - GitHub Actions Artifact Upload Fix
+
+#### Agent: DevOps CI/CD Expert
+
+**Task Completed**: Fixed deprecated GitHub Actions artifact upload
+
+#### Issue:
+- **Problem**: Workflow failing with error about deprecated `actions/upload-artifact@v3`
+- **Root Cause**: GitHub deprecated v3 of artifact actions on April 16, 2024
+- **Solution**: Updated to `actions/upload-artifact@v4`
+
+#### Files Modified:
+- `.github/workflows/sme-social-bot.yml` - Updated artifact upload action from v3 to v4
+
+---
+
 ### 2025-08-09 - GitHub Actions Workflow Failure Investigation
 
 #### Agent: DevOps and CI/CD Pipeline Expert
