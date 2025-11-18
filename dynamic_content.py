@@ -41,9 +41,9 @@ class DynamicContentEngine:
                                 'score': story.get('score', 0),
                                 'source': 'HackerNews'
                             })
-        except:
-            pass
-            
+        except Exception as e:
+            print(f"⚠️ Failed to fetch HackerNews data: {e}")
+
         try:
             # 2. Reddit r/restaurateur and r/smallbusiness (via JSON API)
             subreddits = ['restaurateur', 'smallbusiness', 'dataengineering', 'machinelearning']
@@ -63,9 +63,9 @@ class DynamicContentEngine:
                             'score': post_data['score'],
                             'source': f'r/{subreddit}'
                         })
-        except:
-            pass
-            
+        except Exception as e:
+            print(f"⚠️ Failed to fetch Reddit data: {e}")
+
         return topics
     
     def get_industry_statistics(self) -> List[Dict]:

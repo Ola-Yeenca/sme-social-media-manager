@@ -244,7 +244,7 @@ class TestRunner:
                 'viral_predictor.py',
                 'config.py',
                 'requirements.txt',
-                '.github/workflows/daily-bot.yml'
+                '.github/workflows/sme-social-bot.yml'
             ]
             
             missing_files = []
