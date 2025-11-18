@@ -1,0 +1,207 @@
+# SME Social Media Manager Configuration
+# Runtime configuration for bot behavior and optimization
+
+bot:
+  # Posting configuration
+  posting:
+    daily_post_count: 4
+    optimal_hours: [8, 12, 17, 20]  # UTC hours for optimal posting
+    max_retries: 3
+    character_limit: 280
+
+  # Engagement configuration
+  engagement:
+    mention_check_frequency: 3600  # seconds (1 hour)
+    max_engagements_per_session: 3
+    reply_probability: 0.3  # 30% chance to reply to mentions
+    engagement_delay: 2  # seconds between engagements
+
+  # Weekly engagement mode
+  weekly:
+    enabled: true
+    day_of_week: 6  # 0=Monday, 6=Sunday
+    lookback_days: 7
+    max_mentions_to_process: 10
+
+  # Rate limiting and quotas
+  rate_limits:
+    daily_retrieval_quota: 100  # Twitter API retrievals
+    daily_post_quota: 500  # Twitter API posts
+    simulation_mode_on_limit: true
+    auto_detect_rate_limit: true
+
+  # Session behavior
+  session:
+    track_statistics: true
+    save_history: true
+    history_retention_days: 30
+
+# Viral prediction system configuration
+viral_prediction:
+  # Optimization thresholds
+  min_acceptable_score: 70  # Auto-optimize below this score
+  auto_optimize: true
+  generate_variations: true
+  variation_count: 3
+
+  # Scoring weights (must sum to 1.0)
+  weights:
+    content: 0.30
+    engagement: 0.25
+    timing: 0.15
+    hashtags: 0.15
+    trends: 0.15
+
+  # Content analysis
+  content:
+    optimal_length_min: 140
+    optimal_length_max: 200
+    emoji_count_optimal: 2
+    max_hashtags: 4
+    min_hashtags: 2
+
+  # Timing optimization
+  timing:
+    weekday_hours: [8, 12, 17, 20]
+    weekend_hours: [10, 14, 19]
+    best_days: [1, 2, 3]  # Tuesday-Thursday
+
+  # Engagement patterns
+  engagement_patterns:
+    use_questions: true
+    use_statistics: true
+    use_emotional_triggers: true
+    use_calls_to_action: true
+
+# AI Provider configuration
+ai_providers:
+  # Provider order (fallback chain)
+  primary: "openai"
+  fallbacks: ["anthropic", "groq"]
+
+  # Generation settings
+  generation:
+    max_tokens: 100
+    temperature: 0.7
+    timeout: 30  # seconds
+
+  # Content quality
+  quality:
+    min_content_length: 50
+    max_content_length: 280
+    require_hashtags: false
+
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    backoff_multiplier: 2
+    initial_delay: 1  # seconds
+
+# Multi-platform configuration
+platforms:
+  twitter:
+    enabled: true
+    character_limit: 280
+    auto_thread: false  # Auto-create threads for long content
+
+  linkedin:
+    enabled: true
+    character_limit: 3000
+    min_content_length: 300
+    professional_tone: true
+    expand_hashtags: true  # #AI -> #ArtificialIntelligence #AI
+
+# Content generation
+content:
+  # Dynamic content sources
+  dynamic_sources:
+    hackernews: true
+    reddit: true
+    industry_stats: true
+
+  # Content diversity
+  diversity:
+    use_templates: true
+    avoid_repetition: true
+    repetition_window: 24  # hours
+    max_similar_content: 2
+
+  # Content strategy
+  strategy:
+    business_focus: true
+    data_driven: true
+    bilingual: true  # English + Spanish
+    languages:
+      - "en"
+      - "es"
+    language_distribution:
+      en: 0.7  # 70% English
+      es: 0.3  # 30% Spanish
+
+# Analytics and monitoring
+analytics:
+  enabled: true
+  track_engagement: true
+  track_viral_accuracy: true
+
+  # Reporting
+  reports:
+    weekly_summary: true
+    monthly_summary: true
+    auto_post_reports: false
+
+  # Metrics to track
+  metrics:
+    - posts_created
+    - linkedin_posts
+    - mentions_checked
+    - engagements_made
+    - viral_predictions
+    - prediction_accuracy
+    - total_likes
+    - total_retweets
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  console_output: true
+  file_output: true
+  log_directory: "logs"
+  max_log_size_mb: 10
+  log_retention_days: 30
+
+  # What to log
+  log_ai_requests: true
+  log_api_calls: true
+  log_viral_scores: true
+  log_content_generation: true
+
+# Safety and security
+safety:
+  # Content filtering
+  profanity_filter: false
+  spam_detection: true
+
+  # API security
+  secure_credentials: true
+  mask_tokens_in_logs: true
+
+  # Rate limiting safety
+  respect_rate_limits: true
+  graceful_degradation: true
+
+# Development and testing
+development:
+  test_mode: false
+  debug_mode: false
+  dry_run: false  # Simulate all actions without actual posting
+  mock_ai_responses: false
+
+# Feature flags
+features:
+  viral_prediction: true
+  multi_platform: true
+  auto_optimization: true
+  dynamic_content: true
+  a_b_testing: false  # Future feature
+  ml_predictions: false  # Future feature

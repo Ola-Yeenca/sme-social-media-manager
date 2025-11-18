@@ -743,8 +743,8 @@ def main():
                 print("📅 Weekly engagement mode - processing all mentions from past week")
                 bot.run_daily_automation(posting_only=False, weekly_engagement=True, multi_platform=args.multi_platform)
             else:
-                # Check if we should run in posting-only mode (until Aug 11 or manual override)
-                posting_only = args.posting_only or datetime.now() < datetime(2025, 8, 11)
+                # Use posting-only mode if explicitly requested
+                posting_only = args.posting_only
                 bot.run_daily_automation(posting_only=posting_only, multi_platform=args.multi_platform)
             
     except KeyboardInterrupt:
