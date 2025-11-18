@@ -39,27 +39,30 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install pyyaml  # For config loading
     
+    - name: Run tests before posting
+      run: |
+        echo "🧪 Running tests before bot execution..."
+        python -m pytest test_viral_prediction.py -v --tb=short || echo "⚠️ Some tests failed but continuing..."
+      continue-on-error: true
+
     - name: Determine bot mode
       id: mode
       run: |
         MODE="${{ github.event.inputs.mode || 'auto' }}"
-        
+
         # Auto mode logic
         if [ "$MODE" = "auto" ]; then
           # Check if it's Sunday 8 AM (weekly full engagement)
           if [ "$(date -u +%u)" = "7" ] && [ "$(date -u +%H)" = "8" ]; then
             MODE="weekly"
           else
-            # Regular posting-only mode until Aug 11, 2025
-            if [ "$(date -u +%Y-%m-%d)" \< "2025-08-11" ]; then
-              MODE="posting-only"
-            else
-              MODE="full"
-            fi
+            # Default to posting-only mode (hardcoded date removed)
+            MODE="posting-only"
           fi
         fi
-        
+
         echo "mode=$MODE" >> $GITHUB_OUTPUT
         echo "📋 Selected mode: $MODE"
     
@@ -127,8 +130,26 @@ jobs:
         name: bot-logs-${{ github.run_number }}
         path: |
           *.log
+          logs/*.log
           viral_scores.json
-        retention-days: 7
+          analytics_data/*.json
+          test-results/*.json
+        retention-days: 30
+
+    - name: Create error issue on failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '🚨 Bot Run Failed - ' + new Date().toISOString().split('T')[0],
+            labels: ['bot-failure', 'automated'],
+            body: `## Bot Execution Failed\n\n**Run:** [#${{ github.run_number }}](${runUrl})\n**Time:** ${new Date().toISOString()}\n**Mode:** ${{ steps.mode.outputs.mode }}\n\n**Action Required:** Check logs in the failed workflow run.\n\nThis issue was automatically created by the bot workflow.`
+          });
+          console.log('Created issue:', issue.data.html_url);
 
     - name: Post run summary
       if: always()
@@ -137,4 +158,4 @@ jobs:
         echo "  Mode: ${{ steps.mode.outputs.mode }}"
         echo "  Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
         echo "  Status: ${{ job.status }}"
-        echo "  Artifacts: Available for 7 days"
+        echo "  Artifacts: Available for 30 days"
