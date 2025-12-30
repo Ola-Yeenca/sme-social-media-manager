@@ -27,10 +27,12 @@ class ViralScore:
 
 class ViralTweetPredictor:
     """Predicts viral potential of tweets and suggests improvements"""
-    
-    def __init__(self):
-        # Viral tweet characteristics based on research
-        self.viral_patterns = {
+
+    def __init__(self, industry: str = 'general'):
+        self.industry = industry
+
+        # Base viral patterns (common across industries)
+        self.base_patterns = {
             'emotional_triggers': [
                 'amazing', 'incredible', 'shocking', 'unbelievable', 'breaking',
                 'exclusive', 'urgent', 'wow', 'mind-blowing', 'game-changer',
@@ -45,26 +47,90 @@ class ViralTweetPredictor:
                 'retweet', 'share', 'follow', 'click', 'learn', 'discover',
                 'join', 'get', 'try', 'check out', 'don\'t miss', 'save',
                 'bookmark', 'tag', 'comment', 'thoughts?', 'agree?'
+            ]
+        }
+
+        # Industry-specific trending topics
+        self.industry_trending = {
+            'restaurant': [
+                'restaurant', 'hospitality', 'FoodTech', 'POS', 'menu',
+                'food cost', 'kitchen', 'chef', 'dining', 'delivery',
+                'Toast', 'Square', 'reservation', 'service', 'tips'
             ],
-            'trending_topics': [
+            'real_estate': [
+                'realestate', 'property', 'housing', 'mortgage', 'realtor',
+                'proptech', 'MLS', 'listing', 'valuation', 'home',
+                'Zillow', 'Redfin', 'closing', 'buyer', 'seller', 'agent'
+            ],
+            'compliance': [
+                'compliance', 'regulatory', 'regtech', 'audit', 'risk',
+                'GDPR', 'SOC2', 'governance', 'policy', 'legal',
+                'framework', 'security', 'privacy', 'standard'
+            ],
+            'conversa': [
+                'chatbot', 'customerservice', 'CX', 'engagement', 'support',
+                'livechat', 'automation', 'conversation', 'response', 'NLP',
+                'customer', 'helpdesk', 'messaging'
+            ],
+            'general': [
                 'AI', 'ChatGPT', 'automation', 'productivity', 'growth',
                 'success', 'entrepreneur', 'startup', 'business', 'marketing',
                 'sales', 'revenue', 'ROI', 'data', 'analytics', 'insights'
             ]
         }
-        
+
+        # Industry-specific hashtag tiers
+        self.industry_hashtags = {
+            'restaurant': {
+                'tier1': ['RestaurantTech', 'FoodTech', 'Hospitality', 'AI', 'MenuFlow'],
+                'tier2': ['RestaurantBusiness', 'DynamicPricing', 'POS', 'FoodService', 'ChefLife'],
+                'tier3': ['RestaurantOwner', 'FoodIndustry', 'DataDriven', 'SmallBusiness', 'Restaurants']
+            },
+            'real_estate': {
+                'tier1': ['RealEstate', 'PropTech', 'RealEstateAgent', 'AI', 'PropertyMarket'],
+                'tier2': ['Realtor', 'HomeSales', 'MarketAnalytics', 'HousingMarket', 'PropertyInvestment'],
+                'tier3': ['RealEstateData', 'HomeValuation', 'MLS', 'Broker', 'DataDriven']
+            },
+            'compliance': {
+                'tier1': ['RegTech', 'Compliance', 'RiskManagement', 'AI', 'Governance'],
+                'tier2': ['Audit', 'Regulatory', 'GRC', 'Security', 'Policy'],
+                'tier3': ['ComplianceAutomation', 'RegulaAI', 'RiskAnalytics', 'Standards']
+            },
+            'conversa': {
+                'tier1': ['Chatbot', 'CustomerExperience', 'ConversationalAI', 'AI', 'CX'],
+                'tier2': ['CustomerService', 'LiveChat', 'Automation', 'Support', 'Engagement'],
+                'tier3': ['CustomerSuccess', 'Messaging', 'NLP', 'ServiceDesk', 'Conversa']
+            },
+            'general': {
+                'tier1': ['business', 'entrepreneur', 'startup', 'AI', 'tech'],
+                'tier2': ['growth', 'marketing', 'sales', 'productivity', 'success'],
+                'tier3': ['SME', 'smallbusiness', 'innovation', 'digital', 'data']
+            }
+        }
+
+        # Load industry-specific patterns
+        self._load_industry_patterns()
+
         # Optimal posting times (UTC) based on engagement data
         self.optimal_times = {
             'weekday': [8, 12, 17, 20],  # 8am, 12pm, 5pm, 8pm
             'weekend': [10, 14, 19]       # 10am, 2pm, 7pm
         }
-        
-        # Hashtag effectiveness scores
-        self.hashtag_tiers = {
-            'tier1': ['business', 'entrepreneur', 'startup', 'AI', 'tech'],
-            'tier2': ['growth', 'marketing', 'sales', 'productivity', 'success'],
-            'tier3': ['SME', 'smallbusiness', 'innovation', 'digital', 'data']
-        }
+
+    def _load_industry_patterns(self):
+        """Load industry-specific viral patterns"""
+        # Combine base patterns with industry-specific trending topics
+        self.viral_patterns = self.base_patterns.copy()
+        self.viral_patterns['trending_topics'] = (
+            self.industry_trending.get(self.industry, self.industry_trending['general']) +
+            self.industry_trending['general']  # Always include general tech topics
+        )
+
+        # Load industry-specific hashtag tiers
+        self.hashtag_tiers = self.industry_hashtags.get(
+            self.industry,
+            self.industry_hashtags['general']
+        )
     
     def predict_viral_potential(self, tweet: str, 
                                posting_time: Optional[datetime.datetime] = None,
@@ -436,40 +502,56 @@ class ViralTweetPredictor:
 
 # Example usage and testing
 if __name__ == "__main__":
-    predictor = ViralTweetPredictor()
-    
-    # Test tweets
-    test_tweets = [
-        "Just launched our new analytics dashboard for SMEs!",
-        "🚀 Game-changer: AI-powered analytics that boost revenue by 47% on average. Who's ready to transform their business? #AI #Business #Growth",
-        "New blog post about data analytics",
-        "Unpopular opinion: Most businesses waste 80% of their data. Here's how to fix it: 🧵"
-    ]
-    
-    print("=" * 60)
-    print("VIRAL TWEET PREDICTION SYSTEM - TEST RESULTS")
-    print("=" * 60)
-    
-    for tweet in test_tweets:
-        print(f"\nTweet: {tweet[:50]}...")
-        score = predictor.predict_viral_potential(tweet)
-        print(f"Viral Score: {score.total_score}/100")
-        print(f"Predicted Likes: {score.predicted_engagement['likes']}")
-        print(f"Predicted Retweets: {score.predicted_engagement['retweets']}")
-        print(f"Confidence: {score.confidence}%")
-        
-        if score.recommendations:
-            print("Recommendations:")
-            for rec in score.recommendations:
-                print(f"  - {rec}")
-    
+    import os
+
+    # Test with different industries
+    industries = ['restaurant', 'real_estate', 'general']
+
+    for industry in industries:
+        print("\n" + "=" * 60)
+        print(f"VIRAL TWEET PREDICTION - {industry.upper()}")
+        print("=" * 60)
+
+        predictor = ViralTweetPredictor(industry=industry)
+
+        # Industry-specific test tweets
+        test_tweets = {
+            'restaurant': [
+                "Just launched our new analytics dashboard for restaurants!",
+                "🚀 Game-changer: AI-powered menu pricing that boosts margins by 23%. #RestaurantTech #FoodTech",
+                "Unpopular opinion: Most restaurants are leaving 20% profit on the table. Here's why: 🧵"
+            ],
+            'real_estate': [
+                "Just launched our AI-powered valuation tool for agents!",
+                "🚀 Game-changer: Reduce days on market by 40% with predictive pricing. #RealEstate #PropTech",
+                "Unpopular opinion: Most agents overprice by 5-10%. Data proves it: 🧵"
+            ],
+            'general': [
+                "Just launched our new analytics dashboard for SMEs!",
+                "🚀 Game-changer: AI-powered analytics that boost revenue by 47%. #AI #Business #Growth",
+                "Unpopular opinion: Most businesses waste 80% of their data. Here's how to fix it: 🧵"
+            ]
+        }
+
+        for tweet in test_tweets.get(industry, test_tweets['general']):
+            print(f"\nTweet: {tweet[:60]}...")
+            score = predictor.predict_viral_potential(tweet)
+            print(f"Viral Score: {score.total_score}/100")
+            print(f"Predicted: {score.predicted_engagement['likes']} likes, {score.predicted_engagement['retweets']} RTs")
+
+            if score.recommendations:
+                print("Recommendations:")
+                for rec in score.recommendations[:2]:
+                    print(f"  - {rec}")
+
     print("\n" + "=" * 60)
-    print("GENERATING VIRAL VARIATIONS")
+    print("GENERATING VIRAL VARIATIONS (Real Estate)")
     print("=" * 60)
-    
-    base_content = "SME Analytica helps restaurants increase revenue with data insights"
+
+    predictor = ViralTweetPredictor(industry='real_estate')
+    base_content = "AI-powered valuations help agents price listings accurately"
     variations = predictor.generate_viral_variations(base_content, count=3)
-    
+
     for i, (tweet, score) in enumerate(variations, 1):
         print(f"\nVariation {i} (Score: {score.total_score}/100):")
         print(tweet)

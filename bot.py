@@ -37,10 +37,14 @@ class SMESocialBot:
             
         self.setup_ai()
         
-        # Initialize viral predictor
-        self.viral_predictor = ViralTweetPredictor()
-        print("✅ Viral prediction system initialized")
-        
+        # Initialize viral predictor with industry context
+        self.industry = getattr(self.config, 'sme_industry', 'general')
+        self.viral_predictor = ViralTweetPredictor(industry=self.industry)
+        print(f"✅ Viral prediction system initialized ({self.industry})")
+
+        # Load industry-specific contexts
+        self._load_industry_contexts()
+
         # Simple tracking
         self.session_stats = {
             'posts_created': 0,
@@ -50,7 +54,119 @@ class SMESocialBot:
             'errors': 0,
             'viral_predictions': 0
         }
-        
+
+    def _load_industry_contexts(self):
+        """Load industry-specific contexts for content generation"""
+        self.industry_contexts = {
+            'restaurant': {
+                'business_context': """
+                You are the head of data analytics at SME Analytica / MenuFlow, a cutting-edge restaurant tech company.
+                You're passionate about data, obsessed with helping restaurants thrive, and you speak like a tech founder.
+                Be specific, use real numbers, share insider knowledge. You're building the future of restaurant analytics.
+                Focus on: POS integration, menu optimization, food cost, labor scheduling, dynamic pricing.
+                """,
+                'keywords': [
+                    "restaurant pricing", "restaurant owner", "menu optimization",
+                    "POS system", "restaurant margins", "food cost", "kitchen tech",
+                    "hospitality analytics", "restaurant data"
+                ],
+                'fallback_content': [
+                    "Running a restaurant? Dynamic pricing can boost your margins by up to 10%! 📊 Data-driven decisions make all the difference. #RestaurantTech #MenuFlow",
+                    "Small business tip: Know your profit margins on every menu item. Most restaurants are surprised by what the data reveals! 💡 #RestaurantOwner #Analytics",
+                    "Question for restaurant owners: How often do you adjust your menu prices? Data shows flexibility = profitability. 🍽️ #DynamicPricing #FoodTech",
+                    "The #1 mistake in restaurant pricing? Ignoring competitor analysis. Stay competitive, stay profitable! 🚀 #RestaurantBusiness #DataDriven",
+                    "Real-time analytics + POS integration = smarter business decisions. It's not just about the food anymore! 📈 #RestaurantTech #AI"
+                ]
+            },
+            'real_estate': {
+                'business_context': """
+                You are the head of analytics at SME Analytica's Real Estate division, a PropTech company revolutionizing property valuations.
+                You're passionate about real estate data, obsessed with helping agents close deals faster, and you speak like a tech founder.
+                Be specific, use real numbers, share market insights. You're building the future of real estate analytics.
+                Focus on: automated valuations (AVM), days on market, pricing strategy, lead scoring, market velocity.
+                """,
+                'keywords': [
+                    "real estate agent", "property valuation", "home pricing",
+                    "proptech", "MLS data", "real estate investing", "housing market",
+                    "real estate analytics", "listing strategy", "buyer leads"
+                ],
+                'fallback_content': [
+                    "Real estate agents: AI-powered valuations reduce days on market by up to 40%! 📊 Data beats gut feeling every time. #RealEstate #PropTech",
+                    "Pro tip for agents: Track neighborhood velocity before pricing. Most overpriced listings sit for weeks. 💡 #RealEstateData #MarketAnalytics",
+                    "Question for realtors: How do you price your listings? Comps alone or predictive analytics? 🏠 #RealEstateAgent #DataDriven",
+                    "The #1 mistake in listing strategy? Overpricing by 5-10%. Data shows it costs you weeks and negotiations. 🚀 #PropertyMarket #Pricing",
+                    "Predictive lead scoring + market data = more closings. Top agents already use AI. Do you? 📈 #RealEstate #AI #PropTech"
+                ]
+            },
+            'general': {
+                'business_context': """
+                You are the head of analytics at SME Analytica, a tech company helping SMEs compete with data-driven decisions.
+                You're passionate about democratizing analytics, obsessed with helping small businesses thrive, and you speak like a tech founder.
+                Be specific, use real numbers, share actionable insights. You're building the future of SME analytics.
+                Focus on: automation, AI tools, productivity, data integration, business growth.
+                """,
+                'keywords': [
+                    "small business analytics", "SME data", "business automation",
+                    "AI for business", "productivity tools", "business intelligence",
+                    "data-driven decisions", "startup analytics", "growth metrics"
+                ],
+                'fallback_content': [
+                    "SMEs using data analytics grow 2x faster than those relying on gut feeling. 📊 The numbers don't lie. #SmallBusiness #DataDriven",
+                    "Business tip: Automate your weekly reporting. Save 15+ hours/week for strategic work. 💡 #SME #Automation #Productivity",
+                    "Question for business owners: What's the one metric you wish you understood better? 📈 #Entrepreneur #Analytics",
+                    "The #1 mistake SMEs make? Drowning in data without actionable insights. Let AI do the heavy lifting. 🚀 #AI #BusinessGrowth",
+                    "Real-time dashboards + automated alerts = faster decisions. Enterprise tools, SME pricing. 💪 #SMEAnalytica #TechForSMEs"
+                ]
+            },
+            'compliance': {
+                'business_context': """
+                You are the head of analytics at Regula AI, helping businesses navigate complex compliance requirements with AI.
+                You're passionate about simplifying compliance, obsessed with reducing risk, and you speak like a tech founder.
+                Be specific, use real examples, share regulatory insights. You're building the future of compliance automation.
+                Focus on: regulatory compliance, risk management, audit automation, policy monitoring.
+                """,
+                'keywords': [
+                    "compliance automation", "regulatory tech", "regtech",
+                    "audit management", "risk analytics", "policy compliance",
+                    "compliance monitoring", "regulatory data"
+                ],
+                'fallback_content': [
+                    "Compliance automation reduces audit prep time by up to 70%. 📊 Let AI handle the paperwork. #RegTech #Compliance",
+                    "Pro tip: Real-time policy monitoring catches issues before auditors do. 💡 #RiskManagement #Automation",
+                    "Question for compliance officers: How many hours do you spend on manual reporting? 📈 #RegulaTech #Efficiency",
+                    "The #1 compliance mistake? Reactive instead of proactive. AI-powered monitoring changes the game. 🚀 #Compliance #AI",
+                    "Regulatory changes happen fast. Automated alerts keep you ahead of the curve. 🔔 #RegTech #ComplianceAI"
+                ]
+            },
+            'conversa': {
+                'business_context': """
+                You are the head of product at Conversa, an AI-powered customer conversation platform for SMEs.
+                You're passionate about customer engagement, obsessed with conversion rates, and you speak like a tech founder.
+                Be specific, use real numbers, share engagement insights. You're building the future of customer conversations.
+                Focus on: chatbots, customer engagement, conversion optimization, automated responses.
+                """,
+                'keywords': [
+                    "chatbot", "customer engagement", "conversational AI",
+                    "customer service automation", "live chat", "conversion optimization",
+                    "customer experience", "AI chatbot"
+                ],
+                'fallback_content': [
+                    "AI chatbots handle 80% of routine queries, freeing your team for complex issues. 📊 #Chatbot #CustomerService",
+                    "Pro tip: Response time under 5 minutes = 10x higher conversion. Automation makes it possible. 💡 #ConversationalAI",
+                    "Question for SMEs: How quickly do you respond to customer inquiries? 📈 #CustomerExperience #Automation",
+                    "The #1 mistake in customer service? Making people wait. AI responds instantly, 24/7. 🚀 #Chatbot #CX",
+                    "Personalized AI conversations + smart routing = happier customers. 💬 #Conversa #CustomerEngagement"
+                ]
+            }
+        }
+
+        # Set current context based on industry
+        self.current_context = self.industry_contexts.get(
+            self.industry,
+            self.industry_contexts['general']
+        )
+        print(f"📋 Industry context loaded: {self.industry}")
+
     def setup_twitter(self):
         """Setup Twitter API connection"""
         try:
@@ -126,38 +242,33 @@ class SMESocialBot:
     
     def generate_content(self) -> str:
         """Generate social media content using dynamic data sources"""
-        
-        # Try dynamic content generation first
+
+        # Try dynamic content generation first (industry-aware)
         try:
             from dynamic_content import DynamicContentEngine
-            engine = DynamicContentEngine()
-            
+            engine = DynamicContentEngine(industry=self.industry)
+
             # Generate dynamic content from real sources
             dynamic_content = engine.generate_dynamic_content()
-            
+
             # If we got good dynamic content, use it directly
             if dynamic_content and len(dynamic_content) > 50:
-                print("🎯 Using dynamic real-time content")
+                print(f"🎯 Using dynamic real-time content ({self.industry})")
                 return dynamic_content
-                
+
         except Exception as e:
             print(f"⚠️ Dynamic content generation failed: {e}")
-        
-        # Fallback to AI generation with better prompts
-        business_context = """
-        You are the head of data analytics at SME Analytica, a cutting-edge restaurant tech company.
-        You're passionate about data, obsessed with helping restaurants thrive, and you speak like a tech founder.
-        Be specific, use real numbers, share insider knowledge. You're building the future of restaurant analytics.
-        Sometimes contrarian, always data-driven. Mix technical insights with business impact.
-        """
-        
-        # Import advanced content generator for better prompts
+
+        # Fallback to AI generation with industry-specific prompts
+        business_context = self.current_context['business_context']
+
+        # Import advanced content generator for better prompts (industry-aware)
         try:
             from content_generator import get_dynamic_content_prompt
-            prompt = get_dynamic_content_prompt()
+            prompt = get_dynamic_content_prompt(industry=self.industry)
         except:
             # Ultimate fallback
-            prompt = "Write a data-driven insight about restaurant analytics. Be specific, technical, and engaging. Under 280 chars."
+            prompt = f"Write a data-driven insight about {self.industry} analytics. Be specific, technical, and engaging. Under 280 chars."
         
         try:
             content = None
@@ -235,15 +346,12 @@ class SMESocialBot:
             print(f"❌ Content generation failed: {e}")
             self.session_stats['errors'] += 1
             
-            # Fallback to pre-written content if AI fails
-            fallback_content = [
-                "Running a restaurant? Dynamic pricing can boost your margins by up to 10%! 📊 Data-driven decisions make all the difference. #RestaurantTech #SmallBusiness",
-                "Small business tip: Know your profit margins on every menu item. Most restaurants are surprised by what the data reveals! 💡 #RestaurantOwner #Analytics",
-                "Question for restaurant owners: How often do you adjust your menu prices? Data shows flexibility = profitability. 🍽️ #DynamicPricing #BusinessTips",
-                "The #1 mistake in restaurant pricing? Ignoring competitor analysis. Stay competitive, stay profitable! 🚀 #RestaurantBusiness #PricingStrategy",
-                "Real-time analytics + POS integration = smarter business decisions. It's not just about the food anymore! 📈 #RestaurantTech #DataDriven"
-            ]
-            
+            # Fallback to pre-written industry-specific content if AI fails
+            fallback_content = self.current_context.get('fallback_content', [
+                "Data-driven decisions lead to better business outcomes. 📊 #Analytics #DataDriven",
+                "AI and automation are transforming how SMEs compete. 🚀 #AI #Business",
+            ])
+
             fallback = random.choice(fallback_content)
             print(f"📝 Using fallback content: {fallback[:50]}...")
             return fallback
@@ -479,7 +587,8 @@ class SMESocialBot:
     def generate_reply(self, original_text: str) -> Optional[str]:
         """Generate a helpful reply to a mention"""
         try:
-            business_context = "SME Analytica helps restaurants optimize pricing and increase profits through data analytics."
+            # Use industry-specific context for replies
+            business_context = self.current_context['business_context'].strip()
             reply = None
 
             if self.ai_provider == 'openai':
@@ -551,14 +660,12 @@ class SMESocialBot:
     
     def find_relevant_posts(self) -> List[Dict]:
         """Find posts related to our business to engage with"""
-        keywords = [
-            "restaurant pricing",
-            "restaurant owner",
-            "menu optimization", 
+        # Use industry-specific keywords
+        keywords = self.current_context.get('keywords', [
             "small business analytics",
-            "POS system",
-            "restaurant margins"
-        ]
+            "data-driven decisions",
+            "AI for business"
+        ])
         
         relevant_posts = []
         

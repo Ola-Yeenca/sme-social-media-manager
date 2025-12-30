@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Product | Domain | SME_INDUSTRY value |
 |---------|--------|-------------------|
 | MenuFlow | restaurants.smeanalytica.dev | `restaurant` |
+| RealEstate | smeanalytica.dev/products/realestate | `real_estate` |
 | Regula AI | regula-ai.com | `compliance` |
 | Conversa | conversa.smeanalytica.dev | `conversa` |
 | SME Analytica | smeanalytica.dev | `general` |
@@ -70,10 +71,17 @@ bot.py (SMESocialBot)
 Both content systems use abstract base classes for multi-product support:
 
 **content_generator.py** - `IndustryStrategy` (template-based):
-- `RestaurantStrategy`, `RealEstateStrategy`, `ComplianceStrategy`, `ConversaStrategy`, `GeneralSMEStrategy`
+- `RestaurantStrategy` - Restaurant/hospitality templates with POS, food cost, menu metrics
+- `RealEstateStrategy` - Property market templates with DOM, pricing, lead conversion metrics
+- `GeneralSMEStrategy` - General SME/tech focus with productivity, automation, AI metrics
+- Future: `ComplianceStrategy`, `ConversaStrategy`
 
 **dynamic_content.py** - `IndustryDynamicStrategy` (real-time data):
-- Defines: `get_subreddits()`, `get_keywords()`, `get_base_stats()`, `get_competitors()`, `get_time_insights()`
+- `RestaurantDynamicStrategy` - Subreddits: r/restaurateur, r/KitchenConfidential; Keywords: food, hospitality
+- `RealEstateDynamicStrategy` - Subreddits: r/realestate, r/RealEstateInvesting; Keywords: proptech, valuation
+- `GeneralSMEDynamicStrategy` - Subreddits: r/startups, r/Entrepreneur; Keywords: automation, productivity
+
+Each strategy defines: `get_subreddits()`, `get_keywords()`, `get_base_stats()`, `get_competitors()`, `get_time_insights()`, `get_scenarios()`, `get_hashtag_pools()`
 
 ### AI Provider Fallback Chain
 
@@ -147,3 +155,15 @@ Output: `./test-results/*.json`
 3. **Rate limit handling** - Bot switches to simulation mode when hitting Twitter rate limits, continues tracking stats
 
 4. **LinkedIn adaptation** - Expands hashtags, adds professional context, longer format support
+
+5. **Industry-aware content** - All components (bot, content generators, viral predictor) use `SME_INDUSTRY` to:
+   - Generate industry-specific content and prompts
+   - Use targeted subreddits for trending topics (r/realestate, r/restaurateur, etc.)
+   - Apply industry-specific hashtag tiers for viral optimization
+   - Search for relevant posts using industry keywords
+   - Generate contextual replies to mentions
+
+6. **Viral optimization per industry** - `ViralTweetPredictor` uses industry-specific:
+   - Trending topics (proptech, housing, menu, POS, etc.)
+   - Hashtag tiers (#RealEstate, #PropTech, #RestaurantTech, #FoodTech)
+   - Content scoring aligned with industry audience

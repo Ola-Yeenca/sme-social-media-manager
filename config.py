@@ -36,6 +36,13 @@ class Config:
         self.linkedin_access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
         self.linkedin_organization_id = os.getenv('LINKEDIN_ORGANIZATION_ID')
         self.notion_api_key = os.getenv('NOTION_API_KEY')
+
+        # Industry/product targeting
+        self.sme_industry = os.getenv('SME_INDUSTRY', 'general').lower()
+        valid_industries = ['restaurant', 'real_estate', 'compliance', 'conversa', 'general']
+        if self.sme_industry not in valid_industries:
+            print(f"⚠️ Unknown SME_INDUSTRY '{self.sme_industry}', defaulting to 'general'")
+            self.sme_industry = 'general'
     
     def validate_required_keys(self):
         """Validate that required API keys are present"""
@@ -76,7 +83,8 @@ class Config:
             'anthropic_configured': bool(self.anthropic_api_key),
             'grok_configured': bool(self.grok_api_key),
             'linkedin_configured': bool(self.linkedin_access_token),
-            'notion_configured': bool(self.notion_api_key)
+            'notion_configured': bool(self.notion_api_key),
+            'sme_industry': self.sme_industry
         }
 
 
