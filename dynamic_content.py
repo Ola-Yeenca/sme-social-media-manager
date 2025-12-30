@@ -323,6 +323,248 @@ class RealEstateDynamicStrategy(IndustryDynamicStrategy):
         }
 
 
+class ComplianceDynamicStrategy(IndustryDynamicStrategy):
+    """Dynamic content strategy for compliance/RegTech industry"""
+
+    def get_subreddits(self) -> List[str]:
+        return ['compliance', 'riskmanagement', 'cybersecurity', 'legaltech',
+                'dataengineering', 'informationsecurity', 'sysadmin']
+
+    def get_keywords(self) -> List[str]:
+        return ['compliance', 'regulatory', 'audit', 'risk', 'GDPR', 'SOC2',
+                'governance', 'security', 'GRC', 'policy', 'regtech', 'automation']
+
+    def get_base_stats(self) -> List[Dict]:
+        current_month = datetime.now().strftime('%B')
+        current_quarter = f"Q{(datetime.now().month-1)//3+1}"
+
+        return [
+            {
+                'metric': 'audit prep time reduction',
+                'value': random.randint(60, 80),
+                'unit': '%',
+                'timeframe': 'with automation',
+                'insight': 'AI handles evidence collection'
+            },
+            {
+                'metric': 'compliance violations caught early',
+                'value': random.randint(70, 90),
+                'unit': '%',
+                'timeframe': 'before audit',
+                'insight': 'proactive monitoring wins'
+            },
+            {
+                'metric': 'manual compliance tasks',
+                'value': random.randint(40, 60),
+                'unit': '%',
+                'timeframe': 'that can be automated',
+                'insight': 'huge efficiency opportunity'
+            },
+            {
+                'metric': 'regulatory change response',
+                'value': random.randint(2, 7),
+                'unit': ' days',
+                'timeframe': 'with AI monitoring',
+                'insight': 'vs weeks manually'
+            },
+            {
+                'metric': f'{current_quarter} RegTech adoption',
+                'value': random.randint(45, 68),
+                'unit': '%',
+                'timeframe': 'enterprise sector',
+                'insight': 'automation is becoming standard'
+            }
+        ]
+
+    def get_competitors(self) -> List[Dict]:
+        return [
+            {'company': 'ServiceNow', 'focus': 'GRC platform', 'trend': 'integrated workflows'},
+            {'company': 'OneTrust', 'focus': 'privacy management', 'trend': 'data governance'},
+            {'company': 'LogicGate', 'focus': 'risk management', 'trend': 'no-code GRC'},
+            {'company': 'Drata', 'focus': 'continuous compliance', 'trend': 'SOC2 automation'},
+            {'company': 'Vanta', 'focus': 'security compliance', 'trend': 'real-time monitoring'},
+        ]
+
+    def get_time_insights(self) -> Dict:
+        now = datetime.now()
+        insights = {'time_context': '', 'seasonal_context': '', 'business_rhythm': ''}
+
+        if now.hour < 10:
+            insights['time_context'] = 'morning compliance review - check overnight alerts'
+        elif 10 <= now.hour < 14:
+            insights['time_context'] = 'audit prep time - when evidence collection matters'
+        elif 14 <= now.hour < 17:
+            insights['time_context'] = 'policy review window - update before EOD'
+        else:
+            insights['time_context'] = 'end of day compliance check - close the loop'
+
+        weekday = now.strftime('%A')
+        day_insights = {
+            'Monday': 'Week start - review weekend security events',
+            'Tuesday': 'Compliance deep dive - address outstanding issues',
+            'Wednesday': 'Midweek audit prep - documentation check',
+            'Thursday': 'Risk assessment day - update scores',
+            'Friday': 'Week close - compliance status summary',
+            'Saturday': 'Reduced monitoring - AI handles alerts',
+            'Sunday': 'Pre-week prep - set compliance priorities'
+        }
+        insights['business_rhythm'] = day_insights.get(weekday, '')
+
+        month = now.month
+        if month in [1, 4, 7, 10]:
+            insights['seasonal_context'] = 'Quarter start - audit season begins'
+        elif month in [3, 6, 9, 12]:
+            insights['seasonal_context'] = 'Quarter end - compliance reporting crunch'
+        else:
+            insights['seasonal_context'] = 'Mid-quarter - continuous monitoring focus'
+
+        return insights
+
+    def get_scenarios(self) -> List[str]:
+        return [
+            f"Client win: Company reduced audit prep from 3 weeks to {random.randint(2,4)} days "
+            f"using automated evidence collection.",
+            f"Real result: {random.randint(85,95)}% compliance score achieved with "
+            f"continuous monitoring. Zero surprises at audit.",
+            f"Efficiency gain: GRC team automated {random.randint(60,80)}% of routine "
+            f"compliance checks. Now focused on strategic risk.",
+            f"Proactive catch: AI detected {random.randint(12,25)} policy violations "
+            f"before quarterly audit. All remediated in time.",
+            f"Time savings: Compliance reporting now takes {random.randint(2,5)} hours "
+            f"instead of {random.randint(15,25)}. Data automatically compiled."
+        ]
+
+    def get_hashtag_pools(self) -> Dict[str, List[str]]:
+        return {
+            'tech': ['#AI', '#MachineLearning', '#Automation', '#RegTech', '#DataScience'],
+            'industry': ['#Compliance', '#RiskManagement', '#GRC', '#Audit'],
+            'specific': ['#ComplianceAutomation', '#RegulaAI', '#ContinuousCompliance', '#PolicyMonitoring'],
+            'trending': ['#CyberSecurity', '#DataPrivacy', '#GDPR', '#SOC2', '#Innovation']
+        }
+
+
+class ConversaDynamicStrategy(IndustryDynamicStrategy):
+    """Dynamic content strategy for conversational AI/CX industry"""
+
+    def get_subreddits(self) -> List[str]:
+        return ['customerservice', 'CustomerSuccess', 'chatbots', 'artificial',
+                'smallbusiness', 'ecommerce', 'startups']
+
+    def get_keywords(self) -> List[str]:
+        return ['chatbot', 'customer service', 'AI', 'customer experience', 'support',
+                'automation', 'conversational AI', 'NLP', 'engagement', 'CX']
+
+    def get_base_stats(self) -> List[Dict]:
+        current_month = datetime.now().strftime('%B')
+        current_quarter = f"Q{(datetime.now().month-1)//3+1}"
+
+        return [
+            {
+                'metric': 'response time improvement',
+                'value': random.randint(70, 90),
+                'unit': '%',
+                'timeframe': 'with AI chat',
+                'insight': 'instant responses win customers'
+            },
+            {
+                'metric': 'queries handled by AI',
+                'value': random.randint(60, 80),
+                'unit': '%',
+                'timeframe': 'without human intervention',
+                'insight': 'scale without hiring'
+            },
+            {
+                'metric': 'customer satisfaction increase',
+                'value': random.randint(25, 45),
+                'unit': '%',
+                'timeframe': 'with AI support',
+                'insight': 'faster = happier'
+            },
+            {
+                'metric': 'support cost reduction',
+                'value': random.randint(40, 60),
+                'unit': '%',
+                'timeframe': 'per conversation',
+                'insight': 'automation pays off'
+            },
+            {
+                'metric': f'{current_quarter} AI adoption',
+                'value': random.randint(55, 75),
+                'unit': '%',
+                'timeframe': 'customer-facing businesses',
+                'insight': 'becoming the standard'
+            }
+        ]
+
+    def get_competitors(self) -> List[Dict]:
+        return [
+            {'company': 'Intercom', 'focus': 'customer messaging', 'trend': 'AI-first support'},
+            {'company': 'Drift', 'focus': 'conversational marketing', 'trend': 'revenue focus'},
+            {'company': 'Zendesk', 'focus': 'omnichannel support', 'trend': 'AI integration'},
+            {'company': 'Freshworks', 'focus': 'SMB support', 'trend': 'affordable AI'},
+            {'company': 'Ada', 'focus': 'AI automation', 'trend': 'no-code chatbots'},
+        ]
+
+    def get_time_insights(self) -> Dict:
+        now = datetime.now()
+        insights = {'time_context': '', 'seasonal_context': '', 'business_rhythm': ''}
+
+        if now.hour < 9:
+            insights['time_context'] = 'early morning - AI handles overnight queries'
+        elif 9 <= now.hour < 12:
+            insights['time_context'] = 'morning rush - peak customer inquiry time'
+        elif 12 <= now.hour < 14:
+            insights['time_context'] = 'lunch lull - review conversation analytics'
+        elif 14 <= now.hour < 18:
+            insights['time_context'] = 'afternoon peak - second wave of customer activity'
+        else:
+            insights['time_context'] = 'evening - AI provides 24/7 coverage'
+
+        weekday = now.strftime('%A')
+        day_insights = {
+            'Monday': 'Week start - handle weekend backlog with AI',
+            'Tuesday': 'Customer outreach day - proactive engagement',
+            'Wednesday': 'Midweek check - analyze conversation patterns',
+            'Thursday': 'Optimization day - improve AI responses',
+            'Friday': 'Week wrap - prepare for weekend coverage',
+            'Saturday': 'Reduced staff - AI handles most queries',
+            'Sunday': 'AI-first day - minimal human intervention'
+        }
+        insights['business_rhythm'] = day_insights.get(weekday, '')
+
+        month = now.month
+        if month in [11, 12]:
+            insights['seasonal_context'] = 'Holiday rush - AI essential for volume'
+        elif month in [1, 2]:
+            insights['seasonal_context'] = 'Post-holiday - handle returns and questions'
+        else:
+            insights['seasonal_context'] = 'Steady state - optimize and improve'
+
+        return insights
+
+    def get_scenarios(self) -> List[str]:
+        return [
+            f"Client success: E-commerce handled {random.randint(3,5)}x Black Friday volume "
+            f"with AI chat. Zero wait times.",
+            f"Real result: {random.randint(90,98)}% customer satisfaction with AI responses. "
+            f"Faster than any human team.",
+            f"Efficiency win: Support team reduced from {random.randint(10,20)} to "
+            f"{random.randint(3,5)} people. AI handles the rest.",
+            f"24/7 coverage: {random.randint(30,45)}% of inquiries now come after hours. "
+            f"AI never sleeps.",
+            f"Response time: Went from {random.randint(15,30)} minute average to "
+            f"under {random.randint(30,60)} seconds with AI."
+        ]
+
+    def get_hashtag_pools(self) -> Dict[str, List[str]]:
+        return {
+            'tech': ['#AI', '#ConversationalAI', '#NLP', '#Automation', '#Chatbot'],
+            'industry': ['#CustomerService', '#CX', '#CustomerExperience', '#Support'],
+            'specific': ['#Conversa', '#CustomerEngagement', '#LiveChat', '#SupportAI'],
+            'trending': ['#CustomerSuccess', '#DigitalTransformation', '#AIchat', '#Innovation']
+        }
+
+
 class GeneralSMEDynamicStrategy(IndustryDynamicStrategy):
     """Dynamic content strategy for general SME/tech focus"""
 
@@ -480,6 +722,8 @@ class DynamicContentEngine:
         strategies = {
             'restaurant': RestaurantDynamicStrategy(),
             'real_estate': RealEstateDynamicStrategy(),
+            'compliance': ComplianceDynamicStrategy(),
+            'conversa': ConversaDynamicStrategy(),
         }
         return strategies.get(industry, GeneralSMEDynamicStrategy())
 

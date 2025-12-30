@@ -386,6 +386,329 @@ class RealEstateStrategy(IndustryStrategy):
         }
 
 
+class ComplianceStrategy(IndustryStrategy):
+    """Content strategy for Regula AI - Compliance automation product"""
+
+    def get_templates(self) -> Dict[str, List[str]]:
+        return {
+            'data_insights': [
+                "Compliance data: {metric} improved by {percentage} with automation. Manual processes are the bottleneck.",
+                "New finding: {number}% of compliance failures stem from {problem}. AI catches what humans miss.",
+                "Audit prep time reduced by {percentage} using {feature}. The numbers speak for themselves.",
+                "Regulatory insight: {finding}. Is your organization prepared?",
+                "Before/after: Company went from {problem} to {solution} in {timeframe}.",
+            ],
+            'tech_updates': [
+                "New feature: {feature} now monitors {use_case} in real-time. Zero manual intervention.",
+                "We've integrated with {system} for seamless {benefit}. Compliance just got easier.",
+                "Behind the scenes: Our AI processes {volume} policy documents daily for instant alerts.",
+                "Algorithm update: {metric} detection now {percentage} more accurate.",
+                "Announcing: {feature} for automated {use_case}. Early adopters love it.",
+            ],
+            'case_studies': [
+                "Client success: {business_type} reduced audit prep from {time} to {timeframe}.",
+                "Case study: How {business_name} achieved {percentage} compliance rate using automation.",
+                "Real result: {number} compliance violations caught before audit. AI saved the day.",
+                "From reactive to proactive: {business_type}'s compliance transformation story.",
+                "ROI spotlight: {amount} saved in {timeframe} by automating {area}.",
+            ],
+            'tips_tricks': [
+                "Compliance tip: {specific_technique}. Auditors will thank you.",
+                "Quick win: Set up {automation} to catch {insight} before it becomes a problem.",
+                "Pro advice: Monitor {metric1} alongside {metric2} for complete risk visibility.",
+                "Automation hack: {action} to save {time} weekly on compliance reporting.",
+                "Hidden risk: Most organizations miss {opportunity}. Here's how to catch it.",
+            ],
+            'industry_trends': [
+                "2025 compliance trend: {industry_trend} is reshaping how organizations manage risk.",
+                "{percentage}% of enterprises now use {technology} for compliance. Gap is widening.",
+                "Regulatory shift: {factor} is driving {change} in compliance strategy.",
+                "Trend alert: {pattern} emerging. Proactive organizations are adapting now.",
+                "Market signal: {finding}. Time to modernize your compliance approach?",
+            ],
+            'thought_leadership': [
+                "Unpopular opinion: {controversial_take}. The data backs this up.",
+                "Hot take: {bold_statement}. Compliance teams, listen up.",
+                "Why {common_practice} is creating more risk than it prevents.",
+                "Myth busted: {assumption} - our analysis shows otherwise.",
+                "Controversial: {concept} is outdated. Here's what works in 2025.",
+            ],
+            'engagement_posts': [
+                "Compliance pros: What's your biggest automation challenge? A) {option1} B) {option2} C) {option3}",
+                "Quick poll: How much of your compliance work is still manual? 10% / 50% / 90%",
+                "Fill in the blank: The compliance task I wish I could automate is ____",
+                "GRC teams: What metric do you wish you could track in real-time?",
+                "Debate: {statement} - Agree or disagree?",
+            ]
+        }
+
+    def get_variables(self) -> Dict[str, any]:
+        return {
+            '{metric}': ['audit response time', 'policy violation detection', 'compliance score',
+                        'risk exposure', 'documentation accuracy', 'incident response time'],
+            '{metric1}': ['policy adherence', 'risk scores', 'audit findings'],
+            '{metric2}': ['incident trends', 'remediation time', 'control effectiveness'],
+            '{trend}': ['70% reduction in audit prep', '85% faster issue detection',
+                       '50% fewer compliance gaps', '90% documentation accuracy'],
+            '{pattern}': ['AI-powered monitoring', 'continuous compliance',
+                         'automated evidence collection', 'real-time risk scoring'],
+            '{feature}': ['policy monitoring', 'automated evidence collection', 'risk dashboards',
+                        'compliance AI', 'audit automation', 'regulatory tracking'],
+            '{technology}': ['machine learning', 'NLP for policy analysis', 'real-time monitoring',
+                           'predictive risk models', 'automated workflows'],
+            '{system}': ['GRC platforms', 'SIEM tools', 'HR systems', 'document management',
+                        'ticketing systems', 'identity management'],
+            '{benefit}': ['automated compliance checks', 'real-time alerts', 'audit-ready reports',
+                        'continuous monitoring', 'risk visibility'],
+            '{achievement}': ['pass audits first time', 'reduce compliance costs 40%',
+                            'eliminate manual tracking', 'achieve continuous compliance'],
+            '{amount}': ['$50,000', '$100,000', '$250,000', '$75,000', '$150,000'],
+            '{number}': ['85', '92', '78', '95', '200+'],
+            '{percentage}': ['70%', '85%', '60%', '90%', '45%', '80%'],
+            '{volume}': ['10K+', '50K', '100K', '25K', '500K+'],
+            '{time}': ['2 weeks', '40 hours', '5 days', '3 weeks'],
+            '{timeframe}': ['2 days', '4 hours', '1 week', 'same day'],
+            '{business_name}': ['TechCorp', 'Global Finance', 'MedTech Solutions',
+                               'DataSecure Inc', 'Compliance First'],
+            '{business_type}': ['financial services', 'healthcare providers', 'tech companies',
+                               'manufacturing firms', 'insurance companies'],
+            '{problem}': ['manual tracking', 'audit panic', 'policy gaps',
+                        'siloed data', 'reactive compliance'],
+            '{solution}': ['automated monitoring', 'proactive alerts',
+                         'continuous compliance', 'integrated GRC'],
+            '{use_case}': ['policy violations', 'regulatory changes', 'audit evidence',
+                         'risk assessment', 'control testing'],
+            '{specific_technique}': [
+                'automate evidence collection before audits',
+                'set up real-time policy monitoring',
+                'integrate compliance data sources',
+                'use AI to scan for regulatory changes'
+            ],
+            '{action}': ['connect your GRC tools', 'enable automated alerts',
+                       'set up compliance dashboards', 'automate reporting'],
+            '{area}': ['audit prep', 'policy management', 'risk assessment', 'reporting'],
+            '{controversial_take}': [
+                'Most compliance teams are fighting yesterday\'s battles',
+                'Manual compliance is a liability, not a process',
+                'If you\'re not automating, you\'re already behind',
+                '80% of compliance work shouldn\'t require humans'
+            ],
+            '{bold_statement}': [
+                'Spreadsheet-based compliance is dead',
+                'Every compliance team needs AI now',
+                'Reactive compliance is a business risk',
+                'Automation is survival, not luxury'
+            ],
+            '{option1}': ['Legacy systems', 'Budget constraints', 'Resistance to change'],
+            '{option2}': ['Data silos', 'Lack of expertise', 'Too many regulations'],
+            '{option3}': ['Manual processes', 'Poor visibility', 'Audit fatigue'],
+            '{statement}': ['AI will replace most compliance tasks by 2027',
+                          'Continuous compliance is essential',
+                          'Manual audits are obsolete'],
+            '{industry_trend}': ['AI-powered compliance', 'continuous monitoring',
+                                'automated evidence collection'],
+            '{factor}': ['regulatory complexity', 'data privacy laws', 'remote work',
+                        'cyber threats'],
+            '{change}': ['GRC strategies', 'audit approaches', 'risk management', 'tech adoption'],
+            '{automation}': ['policy alerts', 'compliance reports', 'risk scores', 'audit trails'],
+            '{insight}': ['policy violations', 'compliance gaps', 'risk exposures', 'audit issues'],
+            '{opportunity}': ['automation potential', 'risk reduction', 'efficiency gains'],
+            '{finding}': ['automated orgs have 70% fewer violations',
+                        'AI catches 3x more issues than manual review'],
+            '{assumption}': ['"Compliance can\'t be automated"', '"AI isn\'t ready for GRC"',
+                           '"Manual review is more accurate"'],
+            '{common_practice}': ['annual compliance reviews', 'spreadsheet tracking',
+                                'reactive auditing'],
+            '{concept}': ['periodic compliance checks', 'manual evidence collection',
+                        'siloed GRC tools'],
+            '{result}': ['faster audits', 'fewer violations', 'reduced risk'],
+            '{reality}': ['data shows automation wins', 'top performers automate everything']
+        }
+
+    def get_hashtag_strategies(self) -> List[str]:
+        return [
+            "Use 2-3 specific hashtags like #RegTech #Compliance #RegulaAI",
+            "Mix general and niche hashtags: #GRC #RiskManagement #Automation",
+            "Focus on trending tags: #AI #Compliance #RegulatoryTech",
+            "Use branded hashtag: #RegulaAI plus #Compliance #Audit",
+            "Engagement style with minimal hashtags"
+        ]
+
+    def get_style_instructions(self) -> Dict[str, str]:
+        return {
+            'data_insights': "Lead with risk reduction data. Be authoritative and precise.",
+            'tech_updates': "Show how tech reduces compliance burden. Use clear examples.",
+            'case_studies': "Focus on audit outcomes and time savings. Quantify results.",
+            'tips_tricks': "Immediately actionable. Help avoid common compliance pitfalls.",
+            'industry_trends': "Forward-thinking with regulatory context. Be informative.",
+            'thought_leadership': "Challenge outdated compliance practices. Back with data.",
+            'engagement_posts': "Connect with compliance pain points. Build community."
+        }
+
+
+class ConversaStrategy(IndustryStrategy):
+    """Content strategy for Conversa - Customer conversation AI product"""
+
+    def get_templates(self) -> Dict[str, List[str]]:
+        return {
+            'data_insights': [
+                "CX data: {metric} improved by {percentage} with AI conversations. Customer expectations have changed.",
+                "New finding: Businesses with {feature} see {trend}. The data is clear.",
+                "Response time matters: {finding}. How fast are you responding?",
+                "Customer insight: {percentage}% prefer {pattern}. Is your CX keeping up?",
+                "Before/after: Business went from {problem} to {solution} using AI chat.",
+            ],
+            'tech_updates': [
+                "New feature: {feature} now handles {use_case} automatically. 24/7 coverage.",
+                "We've enhanced our AI to {benefit}. Conversations just got smarter.",
+                "Integration update: Connect {system} for seamless {outcome}.",
+                "Behind the scenes: Our NLP now understands {percentage} more customer intents.",
+                "Announcing: {feature} for personalized {use_case}. Early results are impressive.",
+            ],
+            'case_studies': [
+                "Client success: {business_type} increased {metric} by {percentage} with AI chat.",
+                "Case study: How {business_name} handles {number}+ conversations daily without adding staff.",
+                "Real result: {percentage} customer satisfaction after implementing conversational AI.",
+                "From overwhelmed to optimized: {business_type}'s customer service transformation.",
+                "ROI spotlight: {amount} saved monthly by automating {area}.",
+            ],
+            'tips_tricks': [
+                "CX tip: {specific_technique}. Customers will notice the difference.",
+                "Quick win: Set up {automation} to handle {percentage}% of routine queries.",
+                "Engagement hack: Respond within {time} and see {trend}.",
+                "Pro advice: Use {feature} to personalize conversations at scale.",
+                "Hidden opportunity: Most businesses overlook {opportunity}. Here's how to capture it.",
+            ],
+            'industry_trends': [
+                "2025 CX trend: {industry_trend} is becoming the new standard.",
+                "{percentage}% of customers now expect {pattern}. Are you delivering?",
+                "Market shift: {factor} is driving {change} in customer expectations.",
+                "Trend alert: {pattern} emerging. Leading brands are adapting now.",
+                "Customer insight: {finding}. Time to upgrade your CX strategy?",
+            ],
+            'thought_leadership': [
+                "Unpopular opinion: {controversial_take}",
+                "Hot take: {bold_statement}. CX leaders, take note.",
+                "Why {common_practice} is frustrating your customers.",
+                "Myth busted: {assumption} - customer data says otherwise.",
+                "Controversial: {concept} is outdated. Here's the new playbook.",
+            ],
+            'engagement_posts': [
+                "CX pros: What's your biggest conversation challenge? A) {option1} B) {option2} C) {option3}",
+                "Quick poll: How fast do you respond to customer inquiries? <1min / <5min / >5min",
+                "Fill in the blank: The customer question I wish I could automate is ____",
+                "Support teams: What would you do with 50% more time?",
+                "Debate: {statement} - Agree or disagree?",
+            ]
+        }
+
+    def get_variables(self) -> Dict[str, any]:
+        return {
+            '{metric}': ['response time', 'customer satisfaction', 'first contact resolution',
+                        'conversation volume', 'agent productivity', 'CSAT score'],
+            '{metric1}': ['response time', 'satisfaction scores', 'resolution rates'],
+            '{metric2}': ['conversation volume', 'agent workload', 'customer effort'],
+            '{trend}': ['40% higher satisfaction', '60% faster resolution',
+                       '3x more conversations handled', '50% cost reduction'],
+            '{pattern}': ['instant responses', 'AI-powered support', '24/7 availability',
+                         'personalized conversations'],
+            '{feature}': ['AI chatbot', 'smart routing', 'sentiment analysis',
+                        'conversation AI', 'automated responses', 'intent detection'],
+            '{technology}': ['natural language processing', 'conversational AI', 'machine learning',
+                           'sentiment analysis', 'intent recognition'],
+            '{system}': ['CRM platforms', 'helpdesk tools', 'e-commerce platforms',
+                        'messaging apps', 'social media'],
+            '{outcome}': ['faster resolutions', 'happier customers', 'reduced workload',
+                         'consistent experiences', 'actionable insights'],
+            '{benefit}': ['handle more conversations', 'reduce wait times', 'personalize at scale',
+                        '24/7 support', 'instant answers'],
+            '{achievement}': ['double satisfaction scores', 'reduce response time 80%',
+                            'handle 5x volume', 'achieve 95% resolution rate'],
+            '{amount}': ['$5,000', '$15,000', '$25,000', '$10,000', '$50,000'],
+            '{number}': ['500', '1,000', '5,000', '2,500', '10,000'],
+            '{percentage}': ['40%', '60%', '80%', '35%', '90%', '70%'],
+            '{time}': ['5 minutes', '30 seconds', '2 minutes', '1 minute'],
+            '{timeframe}': ['30 days', '1 week', '2 weeks', 'one month'],
+            '{business_name}': ['FastSupport Co', 'CustomerFirst', 'Engage360',
+                               'TalkNow Solutions', 'ChatMasters'],
+            '{business_type}': ['e-commerce stores', 'SaaS companies', 'service businesses',
+                               'retail brands', 'tech startups'],
+            '{problem}': ['slow responses', 'overwhelmed agents', 'inconsistent service',
+                        'after-hours gaps', 'scaling issues'],
+            '{solution}': ['instant AI responses', 'smart automation',
+                         '24/7 coverage', 'personalized at scale'],
+            '{use_case}': ['FAQs', 'order status', 'appointment booking',
+                         'product recommendations', 'complaint handling'],
+            '{specific_technique}': [
+                'automate your top 10 FAQs first',
+                'use sentiment detection to prioritize urgent issues',
+                'set up smart routing based on intent',
+                'personalize greetings with customer data'
+            ],
+            '{action}': ['connect your channels', 'train your AI on FAQs',
+                       'set up automated responses', 'enable sentiment alerts'],
+            '{area}': ['FAQ handling', 'order inquiries', 'appointment scheduling', 'returns'],
+            '{controversial_take}': [
+                'Most businesses respond too slowly to survive',
+                'Customers prefer AI to waiting for humans',
+                'Email support is dead for Gen Z',
+                '80% of support queries shouldn\'t need a human'
+            ],
+            '{bold_statement}': [
+                'If you\'re not using AI chat, you\'re losing customers',
+                '5-minute response time is too slow',
+                'Every business needs 24/7 support now',
+                'Automation is the new customer service standard'
+            ],
+            '{option1}': ['Response speed', 'After-hours coverage', 'Scaling support'],
+            '{option2}': ['Personalization', 'Channel integration', 'Agent burnout'],
+            '{option3}': ['Consistency', 'Language barriers', 'Complex queries'],
+            '{statement}': ['AI chatbots will handle 80% of support by 2026',
+                          'Customers prefer chat over phone',
+                          'Response time matters more than resolution time'],
+            '{industry_trend}': ['AI-powered conversations', 'omnichannel support',
+                                'proactive engagement'],
+            '{factor}': ['customer expectations', 'mobile-first behavior', 'instant gratification',
+                        'global competition'],
+            '{change}': ['support strategies', 'staffing models', 'channel priorities',
+                        'technology investments'],
+            '{automation}': ['FAQ responses', 'appointment bookings', 'order updates',
+                           'feedback collection'],
+            '{insight}': ['customer frustration points', 'common questions', 'peak times',
+                        'sentiment trends'],
+            '{opportunity}': ['automation potential', 'upsell moments', 'proactive outreach'],
+            '{finding}': ['sub-5-min response = 10x higher conversion',
+                        'AI + human = highest satisfaction'],
+            '{assumption}': ['"Customers want to talk to humans"', '"Chatbots frustrate people"',
+                           '"AI can\'t handle complex issues"'],
+            '{common_practice}': ['email-only support', 'business hours only',
+                                'one-size-fits-all responses'],
+            '{concept}': ['reactive support', 'channel silos', 'manual-first approach'],
+            '{result}': ['faster response', 'happier customers', 'reduced costs'],
+            '{reality}': ['data shows AI wins', 'leading brands have switched']
+        }
+
+    def get_hashtag_strategies(self) -> List[str]:
+        return [
+            "Use 2-3 specific hashtags like #ConversationalAI #CustomerExperience #Conversa",
+            "Mix general and niche hashtags: #CX #Chatbot #CustomerService",
+            "Focus on trending tags: #AI #CustomerSuccess #Automation",
+            "Use branded hashtag: #Conversa plus #CustomerEngagement #SupportAI",
+            "Engagement style with minimal hashtags"
+        ]
+
+    def get_style_instructions(self) -> Dict[str, str]:
+        return {
+            'data_insights': "Lead with customer impact data. Make it relatable.",
+            'tech_updates': "Show how AI improves customer experience. Keep it simple.",
+            'case_studies': "Focus on customer satisfaction and efficiency gains.",
+            'tips_tricks': "Immediately actionable. Help improve response times.",
+            'industry_trends': "Forward-thinking with customer behavior context.",
+            'thought_leadership': "Challenge outdated support practices. Be bold.",
+            'engagement_posts': "Connect with CX pain points. Build community."
+        }
+
+
 class GeneralSMEStrategy(IndustryStrategy):
     """Content strategy for SME Analytica - General SME and tech focus"""
 
@@ -580,9 +903,8 @@ class ContentGenerator:
         strategies = {
             'restaurant': RestaurantStrategy(),
             'real_estate': RealEstateStrategy(),
-            # Future strategies can be added here:
-            # 'compliance': ComplianceStrategy(),
-            # 'conversa': ConversaStrategy(),
+            'compliance': ComplianceStrategy(),
+            'conversa': ConversaStrategy(),
         }
         return strategies.get(industry, GeneralSMEStrategy())
 

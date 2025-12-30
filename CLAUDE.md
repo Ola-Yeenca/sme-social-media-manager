@@ -73,12 +73,15 @@ Both content systems use abstract base classes for multi-product support:
 **content_generator.py** - `IndustryStrategy` (template-based):
 - `RestaurantStrategy` - Restaurant/hospitality templates with POS, food cost, menu metrics
 - `RealEstateStrategy` - Property market templates with DOM, pricing, lead conversion metrics
+- `ComplianceStrategy` - Compliance/GRC templates with audit, risk, regulatory metrics
+- `ConversaStrategy` - Customer experience templates with response time, satisfaction, chatbot metrics
 - `GeneralSMEStrategy` - General SME/tech focus with productivity, automation, AI metrics
-- Future: `ComplianceStrategy`, `ConversaStrategy`
 
 **dynamic_content.py** - `IndustryDynamicStrategy` (real-time data):
 - `RestaurantDynamicStrategy` - Subreddits: r/restaurateur, r/KitchenConfidential; Keywords: food, hospitality
 - `RealEstateDynamicStrategy` - Subreddits: r/realestate, r/RealEstateInvesting; Keywords: proptech, valuation
+- `ComplianceDynamicStrategy` - Subreddits: r/compliance, r/cybersecurity; Keywords: GRC, audit, regtech
+- `ConversaDynamicStrategy` - Subreddits: r/customerservice, r/chatbots; Keywords: CX, support, NLP
 - `GeneralSMEDynamicStrategy` - Subreddits: r/startups, r/Entrepreneur; Keywords: automation, productivity
 
 Each strategy defines: `get_subreddits()`, `get_keywords()`, `get_base_stats()`, `get_competitors()`, `get_time_insights()`, `get_scenarios()`, `get_hashtag_pools()`

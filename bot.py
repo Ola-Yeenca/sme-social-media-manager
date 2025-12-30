@@ -27,23 +27,26 @@ class SMESocialBot:
         self.config = Config()
         self.test_mode = test_mode
         self.multi_platform = multi_platform
-        
+
+        # Set industry FIRST - needed by other components
+        self.industry = getattr(self.config, 'sme_industry', 'general')
+        print(f"🎯 Target industry: {self.industry}")
+
+        # Load industry-specific contexts
+        self._load_industry_contexts()
+
         if not test_mode:
             self.setup_twitter()
             if multi_platform:
                 self.setup_linkedin()
         else:
             print("🧪 Test mode - skipping API connections")
-            
+
         self.setup_ai()
-        
+
         # Initialize viral predictor with industry context
-        self.industry = getattr(self.config, 'sme_industry', 'general')
         self.viral_predictor = ViralTweetPredictor(industry=self.industry)
         print(f"✅ Viral prediction system initialized ({self.industry})")
-
-        # Load industry-specific contexts
-        self._load_industry_contexts()
 
         # Simple tracking
         self.session_stats = {
@@ -192,13 +195,14 @@ class SMESocialBot:
             if self.config.linkedin_access_token:
                 self.linkedin = LinkedInManager(
                     access_token=self.config.linkedin_access_token,
-                    organization_id=getattr(self.config, 'linkedin_organization_id', None)
+                    organization_id=getattr(self.config, 'linkedin_organization_id', None),
+                    industry=self.industry
                 )
-                print("✅ LinkedIn API client initialized")
+                print(f"✅ LinkedIn API client initialized ({self.industry})")
             else:
                 print("⚠️ LinkedIn token not found - LinkedIn posting disabled")
                 self.linkedin = None
-                
+
         except Exception as e:
             print(f"⚠️ LinkedIn setup failed: {e}")
             self.linkedin = None

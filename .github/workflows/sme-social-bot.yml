@@ -30,14 +30,14 @@ on:
       industry:
         description: 'Target product/industry'
         required: false
-        default: 'restaurant'
+        default: 'general'
         type: choice
         options:
+          - general           # SME Analytica (smeanalytica.dev) - Default
           - restaurant        # MenuFlow (restaurants.smeanalytica.dev)
+          - real_estate       # RealEstate (smeanalytica.dev/products/realestate)
           - compliance        # Regula AI (regula-ai.com)
           - conversa          # Conversa (conversa.smeanalytica.dev)
-          - real_estate       # Future vertical
-          - general           # SME Analytica (smeanalytica.dev)
 
 jobs:
   social-media-automation:
@@ -74,8 +74,8 @@ jobs:
           fi
         fi
 
-        # Industry selection (default: restaurant for MenuFlow)
-        INDUSTRY="${{ github.event.inputs.industry || 'restaurant' }}"
+        # Industry selection (default: general for SME Analytica)
+        INDUSTRY="${{ github.event.inputs.industry || 'general' }}"
 
         echo "mode=$MODE" >> $GITHUB_OUTPUT
         echo "industry=$INDUSTRY" >> $GITHUB_OUTPUT
