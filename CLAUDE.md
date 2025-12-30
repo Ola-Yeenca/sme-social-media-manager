@@ -30,10 +30,13 @@ python bot.py --multi-platform     # Twitter + LinkedIn
 python bot.py --test               # Dry run
 python bot.py --viral-test         # Test viral scoring
 python bot.py --viral-analyze "text"  # Analyze specific content
+python bot.py --analytics          # Show performance insights
+python bot.py --update-engagement  # Update engagement metrics for past posts
 
 # Test modules directly
 python viral_predictor.py          # Demo viral prediction
 python linkedin_manager.py         # Test LinkedIn connection
+python engagement_tracker.py       # Demo engagement tracking
 python config.py                   # Validate environment
 
 # Run tests
@@ -60,7 +63,9 @@ bot.py (SMESocialBot)
     |       +-- viral_predictor.py (ViralTweetPredictor)
     |       |       Scores 0-100, auto-optimizes if <70
     |       +-- linkedin_manager.py (LinkedInManager)
-    |               Adapts content for professional context
+    |       |       Adapts content for professional context
+    |       +-- engagement_tracker.py (EngagementTracker)
+    |               Records posts, tracks performance, provides learning insights
     |
     +-- config.py (Config)
             Environment validation, AI fallback chain
@@ -103,6 +108,30 @@ Each strategy defines: `get_subreddits()`, `get_keywords()`, `get_base_stats()`,
 
 Auto-optimization triggers below 70/100.
 
+### Engagement Tracking (engagement_tracker.py)
+
+`EngagementTracker` class that persists post history to `post_history.json`:
+
+**Features:**
+- Records all posts with metadata (platform, industry, viral score, hashtags)
+- Fetches engagement metrics from Twitter API (likes, retweets, replies, impressions)
+- Calculates engagement rate and performance tier (viral/high/medium/low)
+- Provides analytics insights: best hashtags, posting times, content patterns
+- Generates learning context from top performers for AI content generation
+
+**Performance Tiers:**
+- `viral`: 5%+ engagement rate
+- `high`: 2-5% engagement rate
+- `medium`: 0.5-2% engagement rate
+- `low`: <0.5% engagement rate
+
+**Analytics Available:**
+- Average viral score vs actual engagement correlation
+- Best performing hashtags by engagement rate
+- Optimal posting times based on historical data
+- Content pattern analysis (questions, emojis, numbers, CTAs)
+- Recommendations for improvement
+
 ## Environment Variables
 
 ```bash
@@ -135,7 +164,7 @@ Workflow: `.github/workflows/sme-social-bot.yml`
 - Sunday 8 AM UTC (weekly full engagement)
 
 **Manual dispatch options:**
-- Mode: `posting-only`, `full`, `weekly`, `viral-test`, `test`
+- Mode: `posting-only`, `full`, `weekly`, `analytics`, `update-engagement`, `viral-test`, `test`
 - Industry: `restaurant`, `compliance`, `conversa`, `real_estate`, `general`
 
 **Required secrets:** All Twitter keys, at least one AI provider key.
@@ -170,3 +199,14 @@ Output: `./test-results/*.json`
    - Trending topics (proptech, housing, menu, POS, etc.)
    - Hashtag tiers (#RealEstate, #PropTech, #RestaurantTech, #FoodTech)
    - Content scoring aligned with industry audience
+
+7. **Engagement tracking** - All posts are recorded to `post_history.json` with:
+   - Platform, content, viral score, hashtags at time of posting
+   - Engagement metrics updated from Twitter API (4h+ after posting)
+   - Performance tier classification (viral/high/medium/low)
+   - Analytics available via `--analytics` flag or workflow dispatch
+
+8. **Learning from performance** - `EngagementTracker.get_learning_context()` provides:
+   - Top performing posts as examples for AI content generation
+   - Best hashtags, posting times, and content patterns
+   - Recommendations based on historical performance

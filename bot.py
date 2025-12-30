@@ -17,6 +17,7 @@ import groq
 from config import Config
 from viral_predictor import ViralTweetPredictor, ViralScore
 from linkedin_manager import LinkedInManager
+from engagement_tracker import EngagementTracker, PostRecord
 
 
 class SMESocialBot:
@@ -47,6 +48,13 @@ class SMESocialBot:
         # Initialize viral predictor with industry context
         self.viral_predictor = ViralTweetPredictor(industry=self.industry)
         print(f"✅ Viral prediction system initialized ({self.industry})")
+
+        # Initialize engagement tracker
+        self.engagement_tracker = EngagementTracker(
+            storage_path="post_history.json",
+            industry=self.industry
+        )
+        print(f"✅ Engagement tracker initialized")
 
         # Simple tracking
         self.session_stats = {
@@ -400,11 +408,22 @@ class SMESocialBot:
             response = self.twitter.create_tweet(text=content)
             
             if response.data:
+                tweet_id = str(response.data['id'])
                 print(f"✅ POSTED LIVE: {content[:50]}...")
                 print(f"   Full content: {content}")
-                print(f"   Tweet ID: {response.data['id']}")
+                print(f"   Tweet ID: {tweet_id}")
                 print(f"   Viral Score: {viral_score.total_score}/100")
                 self.session_stats['posts_created'] += 1
+
+                # Record post for engagement tracking
+                hashtags = [word for word in content.split() if word.startswith('#')]
+                self.engagement_tracker.record_post(
+                    post_id=tweet_id,
+                    platform='twitter',
+                    content=content,
+                    viral_score=viral_score.total_score,
+                    hashtags=hashtags
+                )
                 return True
             else:
                 print(f"❌ Failed to post: {content[:50]}...")
@@ -476,6 +495,18 @@ class SMESocialBot:
                 linkedin_success, response = self.linkedin.post_to_linkedin(content, optimize_viral=True)
                 if linkedin_success:
                     self.session_stats['linkedin_posts'] += 1
+
+                    # Record LinkedIn post for engagement tracking
+                    linkedin_post_id = response.get('id', f"linkedin_{datetime.now().timestamp()}")
+                    linkedin_viral_score = self.linkedin.predict_linkedin_performance(content)
+                    hashtags = [word for word in content.split() if word.startswith('#')]
+                    self.engagement_tracker.record_post(
+                        post_id=str(linkedin_post_id),
+                        platform='linkedin',
+                        content=content,
+                        viral_score=linkedin_viral_score.total_score,
+                        hashtags=hashtags
+                    )
                 else:
                     print(f"   LinkedIn error: {response.get('error', 'Unknown error')}")
             except Exception as e:
@@ -705,23 +736,90 @@ class SMESocialBot:
     def engage_with_relevant_posts(self, posts: List[Dict]) -> int:
         """Like relevant posts from potential customers"""
         engagements = 0
-        
+
         for post in posts[:2]:  # Limit to 2 engagements
             try:
                 self.twitter.like(post['id'])
                 engagements += 1
                 print(f"✅ Liked relevant post: {post['text'][:30]}...")
-                
+
                 # Wait between engagements
                 time.sleep(3)
-                
+
             except Exception as e:
                 print(f"❌ Like failed: {e}")
                 self.session_stats['errors'] += 1
                 continue
-        
+
         self.session_stats['engagements_made'] += engagements
         return engagements
+
+    def fetch_tweet_engagement(self, tweet_id: str) -> Optional[Dict]:
+        """Fetch engagement metrics for a specific tweet"""
+        try:
+            if hasattr(self, 'rate_limited') and self.rate_limited:
+                print(f"🚀 [SIMULATION] Would fetch engagement for {tweet_id[:20]}...")
+                return None
+
+            tweet = self.twitter.get_tweet(
+                id=tweet_id,
+                tweet_fields=['public_metrics']
+            )
+
+            if tweet.data and tweet.data.public_metrics:
+                metrics = tweet.data.public_metrics
+                return {
+                    'likes': metrics.get('like_count', 0),
+                    'retweets': metrics.get('retweet_count', 0),
+                    'replies': metrics.get('reply_count', 0),
+                    'impressions': metrics.get('impression_count', 1)
+                }
+
+        except Exception as e:
+            if "Rate limit exceeded" in str(e):
+                print("⚠️ Hit rate limit fetching engagement")
+                self.rate_limited = True
+            else:
+                print(f"⚠️ Failed to fetch engagement: {e}")
+
+        return None
+
+    def update_engagement_metrics(self) -> int:
+        """Update engagement metrics for recent posts"""
+        print("\n📊 Updating engagement metrics...")
+
+        posts_to_update = self.engagement_tracker.get_posts_needing_update(
+            min_age_hours=4,
+            max_age_days=7
+        )
+
+        if not posts_to_update:
+            print("   No posts need engagement updates")
+            return 0
+
+        updated_count = 0
+        for post in posts_to_update[:5]:  # Limit to 5 per run
+            if post.platform == 'twitter':
+                engagement = self.fetch_tweet_engagement(post.post_id)
+                if engagement:
+                    self.engagement_tracker.update_engagement(
+                        post.post_id, 'twitter', engagement
+                    )
+                    updated_count += 1
+
+                # Rate limit protection
+                time.sleep(1)
+
+        print(f"   Updated {updated_count} posts")
+        return updated_count
+
+    def get_learning_context_for_generation(self) -> str:
+        """Get learning context from past performance for content generation"""
+        return self.engagement_tracker.get_learning_context(limit=5)
+
+    def show_performance_insights(self):
+        """Display performance insights and recommendations"""
+        self.engagement_tracker.print_summary()
     
     def run_daily_automation(self, posting_only=False, weekly_engagement=False, multi_platform=True):
         """Run the complete daily automation sequence"""
@@ -770,7 +868,11 @@ class SMESocialBot:
             print(f"⏸️ SKIPPING post searches (saves retrieval quota)")
             print(f"📊 Full engagement available on Sundays")
         
-        # 4. Show results
+        # 4. Update engagement metrics for past posts
+        if not posting_only or weekly_engagement:
+            self.update_engagement_metrics()
+
+        # 5. Show results
         print(f"\n📊 Session Results:")
         print(f"  Posts created: {self.session_stats['posts_created']}")
         if multi_platform and self.linkedin:
@@ -779,6 +881,10 @@ class SMESocialBot:
         print(f"  Mentions checked: {self.session_stats['mentions_checked']}")
         print(f"  Engagements made: {self.session_stats['engagements_made']}")
         print(f"  Errors: {self.session_stats['errors']}")
+
+        # 6. Show performance insights
+        self.show_performance_insights()
+
         print("=" * 50)
         print("✅ Bot run complete!")
 
@@ -794,10 +900,26 @@ def main():
     parser.add_argument('--multi-platform', action='store_true', default=True, help='Post to both Twitter and LinkedIn')
     parser.add_argument('--viral-test', action='store_true', help='Test viral prediction system')
     parser.add_argument('--viral-analyze', type=str, help='Analyze viral potential of a specific tweet')
+    parser.add_argument('--analytics', action='store_true', help='Show performance analytics and insights')
+    parser.add_argument('--update-engagement', action='store_true', help='Update engagement metrics for past posts')
     args = parser.parse_args()
     
     try:
-        if args.viral_test:
+        if args.analytics:
+            print("📊 Performance Analytics")
+            from engagement_tracker import EngagementTracker
+            industry = os.getenv('SME_INDUSTRY', 'general')
+            tracker = EngagementTracker(storage_path="post_history.json", industry=industry)
+            tracker.print_summary()
+
+        elif args.update_engagement:
+            print("📊 Updating engagement metrics...")
+            bot = SMESocialBot(multi_platform=False)
+            updated = bot.update_engagement_metrics()
+            print(f"\n✅ Updated {updated} posts")
+            bot.show_performance_insights()
+
+        elif args.viral_test:
             print("🧪 Testing Viral Prediction System...")
             from viral_predictor import ViralTweetPredictor
             predictor = ViralTweetPredictor()

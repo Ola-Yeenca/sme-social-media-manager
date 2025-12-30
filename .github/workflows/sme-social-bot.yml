@@ -25,6 +25,8 @@ on:
           - posting-only      # Content creation with viral prediction
           - full              # Full engagement (mentions + posting)
           - weekly            # Weekly full engagement (process 7 days mentions)
+          - analytics         # Show performance analytics
+          - update-engagement # Update engagement metrics for past posts
           - viral-test        # Test viral prediction system
           - test              # Dry run (no API calls)
       industry:
@@ -129,6 +131,14 @@ jobs:
             echo "Weekly mode: full engagement + 7-day mentions"
             python bot.py --weekly-engagement --multi-platform
             ;;
+          "analytics")
+            echo "Analytics mode: showing performance insights"
+            python bot.py --analytics
+            ;;
+          "update-engagement")
+            echo "Updating engagement metrics for past posts"
+            python bot.py --update-engagement
+            ;;
           "viral-test")
             echo "Testing viral prediction system"
             python bot.py --viral-test
@@ -151,6 +161,7 @@ jobs:
         path: |
           *.log
           viral_scores.json
+          post_history.json
           test-results/
         retention-days: 7
         if-no-files-found: ignore
