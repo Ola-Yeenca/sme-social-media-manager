@@ -155,3 +155,15 @@ Output: `./test-results/*.json`
 3. **Rate limit handling** - Bot switches to simulation mode when hitting Twitter rate limits, continues tracking stats
 
 4. **LinkedIn adaptation** - Expands hashtags, adds professional context, longer format support
+
+5. **Industry-aware content** - All components (bot, content generators, viral predictor) use `SME_INDUSTRY` to:
+   - Generate industry-specific content and prompts
+   - Use targeted subreddits for trending topics (r/realestate, r/restaurateur, etc.)
+   - Apply industry-specific hashtag tiers for viral optimization
+   - Search for relevant posts using industry keywords
+   - Generate contextual replies to mentions
+
+6. **Viral optimization per industry** - `ViralTweetPredictor` uses industry-specific:
+   - Trending topics (proptech, housing, menu, POS, etc.)
+   - Hashtag tiers (#RealEstate, #PropTech, #RestaurantTech, #FoodTech)
+   - Content scoring aligned with industry audience
